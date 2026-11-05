@@ -1,0 +1,29 @@
+# Python virtual environments
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+
+# Generated security alerts
+alerts/*.json
+
+# Generated SOC reports
+reports/*.txt
+
+# Local authentication datasets
+data/*.csv
+
+# VS Code settings
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
