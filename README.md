@@ -2,12 +2,11 @@
 
 ## Project Overview
 
-SentinelAI is a personal cybersecurity research and development
-project focused on building an AI-assisted Security Operations
-Center (SOC) investigation workflow.
+SentinelAI is an independent cybersecurity research and development project focused on building an AI-assisted Security Operations Center (SOC) investigation workflow.
 
-The project combines security event analysis, detection engineering,
-incident response, threat intelligence, and AI-assisted automation.
+The project combines security event analysis, detection engineering, incident response, threat intelligence, and AI-assisted automation.
+
+Development begins with Python-based rule-driven detection and will progressively explore AI-assisted security investigation capabilities.
 
 ## Project Objectives
 
@@ -20,9 +19,16 @@ incident response, threat intelligence, and AI-assisted automation.
 7. Evaluate detection performance using precision, recall, and F1-score.
 8. Research prompt injection risks in AI-assisted security workflows.
 
-## Planned Technology Stack
+## Technology Stack
 
-- Python 3.13
+**Currently Used**
+- Python
+- CSV and JSON
+- Python standard library
+- Git and GitHub
+- Visual Studio Code
+
+**Planned Technologies**
 - Pandas
 - Pytest
 - Scikit-learn
@@ -30,25 +36,100 @@ incident response, threat intelligence, and AI-assisted automation.
 - NIST SP 800-61
 - LLM APIs
 - Model Context Protocol (MCP)
-- Git and GitHub
 
 ## Development Status
 
-Status: In Development
+**Status:** In Development
 
-Current Phase: Day 1 — Environment Setup
+**Current Phase:** Day 2 — Detection Engineering and Performance Evaluation
+
+### Day 1 — Environment Setup and Initial Detection
+
+- Established the Python development environment.
+- Created the initial project structure.
+- Implemented authentication log ingestion.
+- Developed a rule-based brute-force detection engine.
+- Added structured JSON security alert generation.
+- Mapped brute-force activity to MITRE ATT&CK T1110.
+- Initialized Git version control and GitHub repository.
+
+### Day 2 — Detection Evaluation and Testing
+
+- Implemented ground-truth validation using labeled authentication logs.
+- Developed a confusion matrix evaluator.
+- Calculated accuracy, precision, recall, and F1 score.
+- Added false positive rate calculation.
+- Updated the detector to accept configurable input datasets.
+- Tested benign authentication activity below the detection threshold.
+- Tested simulated malicious brute-force activity.
+- Verified structured JSON alert generation.
+
+## Detection Methodology
+
+The initial detection engine identifies potential brute-force attacks based on repeated failed authentication attempts from the same source IP address.
+
+**Current Detection Rule:**
+- Threshold: 5 failed authentication attempts
+- Time Window: 5 minutes
+- Detection Unit: Source IP address
+- Severity: HIGH
+- MITRE ATT&CK Technique: T1110 — Brute Force
+
+The detector supports multiple authentication failure status representations and can process different CSV datasets.
+
+## Preliminary Detection Evaluation
+
+The initial evaluation used a small synthetic dataset containing six unique source IP addresses: five labeled benign and one labeled malicious.
+
+### Confusion Matrix
+
+| Metric | Result |
+|---|---|
+| True Positives (TP) | 1 |
+| False Positives (FP) | 0 |
+| True Negatives (TN) | 5 |
+| False Negatives (FN) | 0 |
+
+### Performance Metrics
+
+| Metric | Result |
+|---|---|
+| Accuracy | 100.00% |
+| Precision | 100.00% |
+| Recall | 100.00% |
+| F1 Score | 100.00% |
+| False Positive Rate | 0.00% |
+
+**Evaluation Limitation:** These results reflect performance on a very small, synthetic dataset. They should not be interpreted as validated real-world detection effectiveness. Future evaluations will incorporate larger datasets, more varied attack patterns, and challenging benign scenarios.
+
+## Controlled Test Scenarios
+
+| Scenario | Expected Behavior | Observed Behavior | Result |
+|---|---|---|---|
+| Three failed logins followed by a successful login | No alert | No alert | Passed |
+| Five failed logins within two minutes | Brute-force alert | Alert generated | Passed |
+
+The malicious test also confirmed successful JSON alert generation containing severity, source IP, failed attempt count, detection timestamp, MITRE ATT&CK mapping, and recommended investigation action.
 
 ## Project Scope
 
-This is an independent, hands-on cybersecurity research prototype.
+SentinelAI is an independent, hands-on cybersecurity research prototype.
 
-Initial development will use synthetic security logs and simulated
-security incidents.
+Initial development uses synthetic security logs and simulated security incidents.
 
-Production SIEM, EDR, and cloud security integrations are potential
-future enhancements and will be documented separately if implemented.
+Production SIEM, EDR, and cloud security integrations are potential future enhancements and will be documented separately if implemented.
+
+## Future Development
+
+- Expand authentication test coverage and evaluate additional detection edge cases.
+- Develop automated tests for detection rules.
+- Improve detection reporting and visualization.
+- Explore alert enrichment and threat intelligence integration.
+- Investigate AI-assisted SOC workflows.
+- Research prompt injection risks and security controls for AI-assisted investigations.
 
 ## Disclaimer
 
-SentinelAI is an educational and research project.
-All simulated incidents and test results will be clearly labeled.
+SentinelAI is an educational and research project. All simulated incidents and preliminary evaluation results are clearly labeled.
+
+The current implementation is a research prototype and is not intended for production security monitoring.
