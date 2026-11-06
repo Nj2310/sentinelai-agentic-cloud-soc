@@ -13,11 +13,11 @@ FAILED_LOGIN_THRESHOLD = 5
 TIME_WINDOW = timedelta(minutes=5)
 
 
-def detect_brute_force():
+def detect_brute_force(log_file=LOG_FILE):
     failed_attempts = defaultdict(deque)
     alerted_ips = set()
 
-    with open(LOG_FILE, mode="r", encoding="utf-8-sig", newline="") as file:
+    with open(log_file, mode="r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
 
         # Process authentication events chronologically
@@ -25,7 +25,7 @@ def detect_brute_force():
             reader,
             key=lambda row: datetime.strptime(
                 row["timestamp"], "%Y-%m-%d %H:%M:%S"
-            ),
+                ),
         )
 
     print("=" * 55)
@@ -40,7 +40,7 @@ def detect_brute_force():
         )
 
         # Track failed attempts for each source IP
-        if status == "failure":
+        if status in {"failure", "failed"}:
             attempts = failed_attempts[ip]
             attempts.append(timestamp)
 
@@ -65,7 +65,13 @@ def detect_brute_force():
 
     print("\nDetection completed.")
     print(f"Total suspicious source IPs: {len(alerted_ips)}")
+    
+    return alerted_ips
 
 
 if __name__ == "__main__":
+    # Use the original authentication dataset
     detect_brute_force()
+
+    # Use the new benign login test dataset
+    detect_brute_force("data/benign_login_test.csv")
