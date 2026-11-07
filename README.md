@@ -133,3 +133,54 @@ Production SIEM, EDR, and cloud security integrations are potential future enhan
 SentinelAI is an educational and research project. All simulated incidents and preliminary evaluation results are clearly labeled.
 
 The current implementation is a research prototype and is not intended for production security monitoring.
+
+
+## Automated Detection Testing
+
+SentinelAI uses Pytest to validate its rule-based brute-force
+detection engine.
+
+### Test Scenarios
+
+The automated test suite covers five scenarios:
+
+1. **Benign Authentication:** Three failed login attempts
+   do not trigger an alert.
+2. **Brute-Force Detection:** Five rapid failed login
+   attempts trigger an alert.
+3. **Threshold Boundary:** Four failed login attempts
+   remain below the detection threshold.
+4. **Time-Window Validation:** Five failed attempts spread
+   across 20 minutes do not trigger an alert.
+5. **Exact Time Boundary:** Five failed attempts spanning
+   exactly five minutes trigger an alert.
+
+### Running the Tests
+
+Install Pytest in your Python environment:
+
+```bash
+python -m pip install pytest
+```
+
+Run the automated test suite:
+
+```bash
+python -m pytest tests/test_detector.py -v
+```
+
+### Test Fixtures
+
+Synthetic authentication datasets are stored in
+`tests/fixtures/`.
+
+These datasets are version-controlled to support
+reproducible testing without exposing real authentication logs.
+
+### Preliminary Results
+
+All five automated tests passed during local validation
+using Python 3.13.17 and Pytest 9.2.0.
+
+These results validate the tested rule behavior on synthetic
+datasets and do not establish real-world detection accuracy.
