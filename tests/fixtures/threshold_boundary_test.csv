@@ -1,0 +1,5 @@
+timestamp,username,source_ip,event_type,status,ground_truth
+2026-11-04 13:00:00,testuser,192.0.2.60,login,failed,benign
+2026-11-04 13:00:30,testuser,192.0.2.60,login,failed,benign
+2026-11-04 13:01:00,testuser,192.0.2.60,login,failed,benign
+2026-11-04 13:01:30,testuser,192.0.2.60,login,failed,benign

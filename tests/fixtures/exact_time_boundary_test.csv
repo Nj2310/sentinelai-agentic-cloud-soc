@@ -1,0 +1,6 @@
+timestamp,username,source_ip,event_type,status,ground_truth
+2026-11-04 15:00:00,testuser,198.51.100.80,login,failed,malicious
+2026-11-04 15:01:00,testuser,198.51.100.80,login,failed,malicious
+2026-11-04 15:02:00,testuser,198.51.100.80,login,failed,malicious
+2026-11-04 15:03:00,testuser,198.51.100.80,login,failed,malicious
+2026-11-04 15:05:00,testuser,198.51.100.80,login,failed,malicious
