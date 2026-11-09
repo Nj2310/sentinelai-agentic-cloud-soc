@@ -1,0 +1,11 @@
+timestamp,username,source_ip,event_type,status,ground_truth
+2026-11-04 17:00:00,testuser,,login,failed,benign
+2026-11-04 17:00:10,testuser,,login,failed,benign
+2026-11-04 17:00:20,testuser,,login,failed,benign
+2026-11-04 17:00:30,testuser,,login,failed,benign
+2026-11-04 17:00:40,testuser,,login,failed,benign
+2026-11-04 17:01:00,testuser,198.51.100.100,login,failed,malicious
+2026-11-04 17:01:30,testuser,198.51.100.100,login,failed,malicious
+2026-11-04 17:02:00,testuser,198.51.100.100,login,failed,malicious
+2026-11-04 17:02:30,testuser,198.51.100.100,login,failed,malicious
+2026-11-04 17:03:00,testuser,198.51.100.100,login,failed,malicious

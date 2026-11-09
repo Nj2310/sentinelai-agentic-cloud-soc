@@ -1,0 +1,7 @@
+timestamp,username,source_ip,event_type,status,ground_truth
+invalid-date,testuser,192.0.2.90,login,failed,benign
+2026-11-04 16:00:00,testuser,198.51.100.90,login,failed,malicious
+2026-11-04 16:00:30,testuser,198.51.100.90,login,failed,malicious
+2026-11-04 16:01:00,testuser,198.51.100.90,login,failed,malicious
+2026-11-04 16:01:30,testuser,198.51.100.90,login,failed,malicious
+2026-11-04 16:02:00,testuser,198.51.100.90,login,failed,malicious

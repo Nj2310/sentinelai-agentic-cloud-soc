@@ -13,27 +13,55 @@ FAILED_LOGIN_THRESHOLD = 5
 TIME_WINDOW = timedelta(minutes=5)
 
 
-def detect_brute_force(log_file=LOG_FILE):
+def detect_brute_force(log_file=LOG_FILE, save_alerts=True):
     failed_attempts = defaultdict(deque)
     alerted_ips = set()
 
+    
     with open(log_file, mode="r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
 
-        # Process authentication events chronologically
-        events = sorted(
-            reader,
-            key=lambda row: datetime.strptime(
-                row["timestamp"], "%Y-%m-%d %H:%M:%S"
-                ),
-        )
+        # Validate timestamps before processing events
+        valid_events = []
+
+        for row in reader:
+            try:
+                timestamp = datetime.strptime(
+                    row["timestamp"], "%Y-%m-%d %H:%M:%S"
+                )
+
+                valid_events.append((timestamp, row))
+
+            except (ValueError, KeyError, TypeError):
+                print(
+                    f"[WARNING] Skipping event with invalid timestamp: "
+                    f"{row.get('timestamp')}"
+                )
+
+        # Process valid authentication events chronologically
+        events = [
+            row
+            for timestamp, row in sorted(
+                valid_events,
+                key=lambda item: item[0]
+            )
+        ]
+
 
     print("=" * 55)
     print("SentinelAI - Brute-Force Detection Engine")
     print("=" * 55)
 
     for event in events:
-        ip = event["source_ip"]
+        # ip = event["source_ip"]
+        # status = event["status"].strip().lower()
+        ip = (event.get("source_ip") or "").strip()
+
+        # Skip events with missing source IP addresses
+        if not ip:
+            print("[WARNING] Skipping event with missing source IP.")
+            continue
+        
         status = event["status"].strip().lower()
         timestamp = datetime.strptime(
             event["timestamp"], "%Y-%m-%d %H:%M:%S"
@@ -58,7 +86,9 @@ def detect_brute_force(log_file=LOG_FILE):
                 print(f"Detection Time: {timestamp}")
                 print("MITRE ATT&CK: T1110 - Brute Force")
                 print("Recommended Action: Investigate authentication activity.")
-                save_alert(ip, len(attempts), timestamp.isoformat())
+                
+                if save_alerts:
+                    save_alert(ip, len(attempts), timestamp.isoformat())
 
     if not alerted_ips:
         print("No brute-force activity detected.")
