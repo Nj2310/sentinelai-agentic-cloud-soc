@@ -13,40 +13,72 @@ FAILED_LOGIN_THRESHOLD = 5
 TIME_WINDOW = timedelta(minutes=5)
 
 
-def detect_brute_force(log_file=LOG_FILE, save_alerts=True):
+def detect_brute_force(log_file=LOG_FILE, save_alerts=True, events=None):
     failed_attempts = defaultdict(deque)
     alerted_ips = set()
 
     
-    with open(log_file, mode="r", encoding="utf-8-sig", newline="") as file:
-        reader = csv.DictReader(file)
+    # with open(log_file, mode="r", encoding="utf-8-sig", newline="") as file:
+    #     reader = csv.DictReader(file)
 
-        # Validate timestamps before processing events
-        valid_events = []
+    #     # Validate timestamps before processing events
+    #     valid_events = []
 
-        for row in reader:
-            try:
-                timestamp = datetime.strptime(
-                    row["timestamp"], "%Y-%m-%d %H:%M:%S"
-                )
+    #     for row in reader:
+    #         try:
+    #             timestamp = datetime.strptime(
+    #                 row["timestamp"], "%Y-%m-%d %H:%M:%S"
+    #             )
 
-                valid_events.append((timestamp, row))
+    #             valid_events.append((timestamp, row))
 
-            except (ValueError, KeyError, TypeError):
-                print(
-                    f"[WARNING] Skipping event with invalid timestamp: "
-                    f"{row.get('timestamp')}"
-                )
+    #         except (ValueError, KeyError, TypeError):
+    #             print(
+    #                 f"[WARNING] Skipping event with invalid timestamp: "
+    #                 f"{row.get('timestamp')}"
+    #             )
 
-        # Process valid authentication events chronologically
-        events = [
-            row
-            for timestamp, row in sorted(
-                valid_events,
-                key=lambda item: item[0]
+    #     # Process valid authentication events chronologically
+    #     events = [
+    #         row
+    #         for timestamp, row in sorted(
+    #             valid_events,
+    #             key=lambda item: item[0]
+    #         )
+    #     ]
+
+    
+    # Use supplied events or load authentication events from CSV
+    if events is None:
+        with open(log_file, mode="r", encoding="utf-8-sig", newline="") as file:
+            reader = csv.DictReader(file)
+            raw_events = list(reader)
+    else:
+        raw_events = events
+
+    # Validate and sort authentication events
+    valid_events = []
+
+    for row in raw_events:
+        try:
+            timestamp = datetime.strptime(
+                row["timestamp"], "%Y-%m-%d %H:%M:%S"
             )
-        ]
+            valid_events.append((timestamp, row))
 
+        except (ValueError, KeyError, TypeError):
+            print(
+                f"[WARNING] Skipping event with invalid timestamp: "
+                f"{row.get('timestamp')}"
+            )
+
+    events = [
+        row
+        for timestamp, row in sorted(
+            valid_events,
+            key=lambda item: item[0]
+        )
+    ]
 
     print("=" * 55)
     print("SentinelAI - Brute-Force Detection Engine")

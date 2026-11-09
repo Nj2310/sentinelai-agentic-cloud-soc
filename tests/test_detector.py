@@ -18,7 +18,7 @@ SRC_DIR = PROJECT_ROOT / "src"
 sys.path.insert(0, str(SRC_DIR))
 
 from detector import detect_brute_force
-
+from cloudtrail_parser import parse_cloudtrail_logs
 
 def test_benign_login_no_alert():
     """Verify that benign login activity does not trigger an alert."""
@@ -143,3 +143,19 @@ def test_missing_source_ip_is_skipped():
     )
 
     assert detected_ips == {"198.51.100.100"}
+
+
+def test_cloudtrail_brute_force_detection():
+    """Verify brute-force detection using normalized AWS CloudTrail events."""
+
+    # Load and normalize synthetic CloudTrail logs
+    events = parse_cloudtrail_logs()
+
+    # Run the existing detection engine
+    detected_ips = detect_brute_force(
+        events=events,
+        save_alerts=False
+    )
+
+    # Verify that the suspicious AWS login source is detected
+    assert detected_ips == {"198.51.100.50"}

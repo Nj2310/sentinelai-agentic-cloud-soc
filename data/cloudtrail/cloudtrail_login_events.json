@@ -1,0 +1,94 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-08T10:00:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.50",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "test-admin"
+      },
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-08T10:01:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.50",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "test-admin"
+      },
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-08T10:02:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.50",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "test-admin"
+      },
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-08T10:03:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.50",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "test-admin"
+      },
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-08T10:04:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.50",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "test-admin"
+      },
+      "responseElements": {
+        "ConsoleLogin": "Failure"
+      }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-08T10:05:00Z",
+      "eventSource": "signin.amazonaws.com",
+      "eventName": "ConsoleLogin",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "203.0.113.10",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "normal-user"
+      },
+      "responseElements": {
+        "ConsoleLogin": "Success"
+      }
+    }
+  ]
+}
