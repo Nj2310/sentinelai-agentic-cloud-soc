@@ -40,3 +40,41 @@ def test_investigator_handles_no_matching_login_events():
         "No matching login events found" in finding
         for finding in result["findings"]
     )
+
+
+def test_investigator_with_ai():
+    from unittest.mock import patch
+    from src.agents.investigator import investigate_alert
+
+    alert = {
+        "alert_type": "IAM_SELF_ACCESS_KEY_CREATION",
+        "actor": "test-user",
+        "source_ip": "198.51.100.75",
+        "severity": "medium",
+    }
+
+    with (
+        patch(
+            "src.agents.investigator.lookup_login_activity",
+            return_value={
+                "event_count": 0,
+                "matching_events": [],
+            },
+        ),
+        patch(
+            "src.agents.investigator.generate_security_analysis",
+            return_value="Suspicious activity requires analyst review.",
+        ) as mock_ai,
+    ):
+        result = investigate_alert(alert, use_ai=True)
+
+    assert result["status"] == "investigation_complete"
+    assert result["login_evidence"]["event_count"] == 0
+    assert result["ai_analysis"] == (
+        "Suspicious activity requires analyst review."
+    )
+
+    mock_ai.assert_called_once()
+    assert mock_ai.call_args.args[0]["alert_type"] == (
+        "IAM_SELF_ACCESS_KEY_CREATION"
+    )

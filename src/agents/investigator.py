@@ -7,9 +7,11 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from iam_parser import parse_iam_events
 from iam_detector import detect_suspicious_iam_activity
-from investigation_tools import lookup_login_activity
+# from investigation_tools import lookup_login_activity
+from src.agents.investigation_tools import lookup_login_activity
+from src.agents.llm_client import generate_security_analysis
 
-def investigate_alert(alert):
+def investigate_alert(alert, use_ai=False):
     """Create a read-only, structured IAM investigation."""
 
     investigation = {
@@ -54,6 +56,10 @@ def investigate_alert(alert):
                 "No matching login events found in the available "
                 "CloudTrail dataset for this source IP."
             )
+        if use_ai:
+            investigation["ai_analysis"] = generate_security_analysis(
+                investigation
+        )
 
     return investigation
 

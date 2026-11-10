@@ -616,3 +616,35 @@ All simulated incidents and preliminary evaluation results are clearly identifie
 The current implementation is not intended for production security monitoring or autonomous incident response.
 
 Security detections, AI-generated recommendations, and future automation capabilities must be independently validated before use in operational environments.
+
+## Day 7 — Local LLM Integration (Qwen3 + Ollama)
+
+Integrated a locally hosted Qwen3 4B language model into SentinelAI's SOC investigation workflow using Ollama.
+
+### Implemented Features
+
+- Installed Ollama and downloaded the Qwen3 4B model for local inference.
+- Created `src/agents/llm_client.py` to generate AI-assisted security investigation summaries.
+- Connected the LLM client to the existing SOC Investigator through an optional `use_ai` parameter.
+- Preserved deterministic IAM detection and read-only CloudTrail evidence collection.
+- Added evidence-grounding instructions to reduce unsupported security conclusions.
+- Generated investigation summaries containing observed activity, risk assessments, and recommended analyst investigation steps.
+- Added mocked unit tests for the LLM client and AI-enabled investigator.
+
+### Validation
+
+- **15 automated tests passed** using pytest.
+- Successfully ran an end-to-end AI-assisted investigation against synthetic AWS IAM and CloudTrail events.
+- Verified that the updated AI prompt avoided claiming confirmed account compromise without supporting evidence.
+
+### Technology Stack
+
+Python, pytest, AWS CloudTrail (synthetic data), Ollama, Qwen3 4B.
+
+### Security and Cost Considerations
+
+- All model inference runs locally through Ollama.
+- No paid LLM API or AWS deployment is required.
+- Investigation tools are read-only.
+- AI-generated findings are advisory and require analyst verification.
+- Prompt instructions reduce hallucination risk but do not guarantee factual accuracy.
