@@ -1,0 +1,46 @@
+{
+  "Records": [
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-09T14:00:00Z",
+      "eventSource": "iam.amazonaws.com",
+      "eventName": "CreateAccessKey",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "192.0.2.10",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "security-admin"
+      },
+      "requestParameters": {
+        "userName": "service-account"
+      },
+      "responseElements": {
+        "accessKey": {
+          "userName": "service-account",
+          "status": "Active"
+        }
+      }
+    },
+    {
+      "eventVersion": "1.08",
+      "eventTime": "2026-11-09T14:05:00Z",
+      "eventSource": "iam.amazonaws.com",
+      "eventName": "CreateAccessKey",
+      "awsRegion": "us-east-1",
+      "sourceIPAddress": "198.51.100.75",
+      "userIdentity": {
+        "type": "IAMUser",
+        "userName": "compromised-user"
+      },
+      "requestParameters": {
+        "userName": "compromised-user"
+      },
+      "responseElements": {
+        "accessKey": {
+          "userName": "compromised-user",
+          "status": "Active"
+        }
+      }
+    }
+  ]
+}
