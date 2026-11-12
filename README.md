@@ -1,344 +1,596 @@
-SentinelAI — Agentic AI Cloud Security Operations Platform
-A Local-First Cybersecurity Research and Development Project
+# SentinelAI — Agentic AI Cloud Security Operations Platform
 
-Python | AWS CloudTrail | Detection Engineering | SOC Investigation | Local Qwen3 AI | Controlled Tool Use | Cloud Security
-Project Overview
-SentinelAI is an independent cybersecurity research and development project focused on an AI-assisted Security Operations Center (SOC) investigation platform for cloud security monitoring and incident analysis.
+## Technical Lab Report: Investigation State Management and Auditability
 
-The project combines security log ingestion, detection engineering, synthetic AWS CloudTrail analysis, Identity and Access Management (IAM) monitoring, evidence collection, and structured investigation workflows. Development is incremental: deterministic Python detections provide the foundation, while a locally hosted language model can propose approved investigation tools and produce advisory security analysis.
+**Project:** SentinelAI — Agentic AI Cloud Security Operations Platform  
+**Development Phase:** Day 9  
+**Project Type:** Cybersecurity Research and Development  
+**Environment:** Python 3.13.17, Windows, Visual Studio Code  
+**Technologies:** Python, AWS CloudTrail (Synthetic), Ollama, Qwen3 4B, Pytest  
+**Development Approach:** Local-First, AI-Assisted Security Operations  
+**Project Status:** Day 9 implementation and automated validation completed
 
-Current implementation: A working local prototype with rule-based detections, IAM investigation, Ollama-hosted Qwen3 4B analysis, and a single-step AI-selected, read-only CloudTrail lookup workflow.
+---
 
-Future direction: Multi-step agent orchestration, broader event correlation, machine learning, dashboard visualization, and stronger security evaluation.
+## 1. Executive Summary
 
-No live AWS account, paid LLM API, or deployed cloud infrastructure is required.
-Project Objectives
-1. Build a Python-based security log ingestion and normalization pipeline.
-2. Analyze authentication activity and AWS CloudTrail security events.
-3. Develop rule-based detections for suspicious security activity.
-4. Identify security-relevant IAM operations and credential creation events.
-5. Classify, prioritize, and enrich security alerts.
-6. Map applicable detections to MITRE ATT&CK techniques.
-7. Develop SOC investigation and evidence-gathering workflows.
-8. Integrate local LLMs for AI-assisted investigation and incident summaries.
-9. Explore controlled agentic tool use and multi-step investigation orchestration.
-10. Evaluate detection effectiveness using accuracy, precision, recall, F1-score, and false positive rate.
-11. Apply incident response principles informed by NIST SP 800-61.
-12. Research prompt injection, tool misuse, and security risks in AI-assisted SOC operations.
-13. Maintain a modular, testable, reproducible cloud security research platform.
-Technology Stack
-Currently Implemented
-Technology	Purpose
-Python 3.13	Core application and security detection logic
-Python standard library	CSV/JSON processing, timestamps, ipaddress, data validation
-Synthetic AWS CloudTrail-style JSON	Authentication and IAM event analysis
-Pytest	Automated detection, investigator, and workflow tests
-unittest.mock	Isolated LLM and tool execution testing
-Ollama	Local model inference
-Qwen3 4B (qwen3:4b)	AI-assisted investigation summaries and tool selection
-Git and GitHub	Version control and documentation
-Visual Studio Code	Local development environment
+SentinelAI is a local-first cybersecurity research project designed to explore how artificial intelligence can support Security Operations Center (SOC) investigations through security event detection, automated evidence collection, and controlled investigation workflows.
 
+The platform combines Python-based detection engineering, synthetic AWS CloudTrail analysis, Identity and Access Management (IAM) monitoring, and a locally hosted Qwen3 4B language model through Ollama.
 
-Planned / Research Technologies
-Technology	Planned Purpose
-LangGraph	Stateful, multi-step agent orchestration
-Scikit-learn	Anomaly detection and machine learning
-Pandas	Data exploration and transformation
-Streamlit	Interactive SOC monitoring dashboard
-Terraform	Infrastructure-as-code research
-GitHub Actions	Automated CI testing
-Model Context Protocol (MCP)	Research into standardized tool integrations
-MITRE ATT&CK	Expanded technique mapping and investigation context
-NIST SP 800-61	Incident response methodology
+During the earlier development phases, SentinelAI progressed from basic authentication brute-force detection to IAM security monitoring, deterministic SOC investigation, AI-assisted analysis, and controlled AI-directed tool execution.
 
+**Day 9 focused on implementing investigation state management and auditability.** The objective was to make investigation workflows more traceable by introducing unique investigation identifiers, status tracking, execution records, audit logs, tool-call limits, and structured failure handling.
 
-Planned technologies are not yet integrated unless documented in a subsequent update.
-System Architecture
-Current Implementation
-                  Synthetic Security Data
-                           |
-              +------------+------------+
-              |                         |
-       Authentication CSV        AWS CloudTrail JSON
-                                        |
-                               +--------+--------+
-                               |                 |
-                          ConsoleLogin     IAM CreateAccessKey
-                               |                 |
-              +----------------+-----------------+
-                               |
-                        Event Parsers
-                               |
-                       Detection Engines
-                               |
-                     Structured Security Alerts
-                               |
-              +----------------+----------------+
-              |                                 |
-       Deterministic SOC                 Agentic Workflow
-         Investigator                          |
-              |                        Local Qwen3 4B
-       Read-only Evidence                  Tool Selector
-              |                                 |
-       Optional Qwen3 Summary          Tool/Parameter Checks
-              |                                 |
-       Investigation Findings         Allowlisted Tool Executor
-                                                |
-                                        Read-only Login Lookup
-                                                |
-                                         Investigation Result
-The current agentic workflow performs one model-selected tool call at most. It does not implement iterative planning, LangGraph state management, or autonomous remediation.
-Planned Extended Architecture
-Security Alerts -> Stateful Agent Orchestration
-                       |
-               Investigation State
-                       |
-              Read-only Evidence Tools
-                       |
-               Event Correlation
-                       |
-              Context / Risk Analysis
-                       |
-              Evidence-based Summary
-                       |
-                Human Analyst Review
-                       |
-                  SOC Dashboard
-Implemented Security Capabilities
-1. Authentication Brute-Force Detection
-SentinelAI identifies potential brute-force authentication attempts from repeated failed logins originating from the same source IP.
-Parameter	Value
-Detection type	Brute-force authentication
-Failure threshold	5 failed login attempts
-Time window	5 minutes
-Detection unit	Source IP address
-Alert severity	HIGH
-MITRE ATT&CK	T1110 — Brute Force
+The implementation was validated using automated tests covering investigation initialization, state transitions, execution recording, stopping conditions, successful investigations, and failure scenarios.
 
+**Final validation result: 34 automated tests passed, with zero failures.**
 
-Features include CSV ingestion, normalized authentication statuses, timestamp parsing and chronological ordering, sliding-window detection, duplicate-alert prevention within a run, structured JSON alerts, optional alert persistence, and graceful skipping of malformed timestamps or missing source IPs.
-2. AWS CloudTrail Authentication Analysis
-The local CloudTrail parser extracts and normalizes synthetic ConsoleLogin events into timestamp, source IP, username, and authentication status. The existing brute-force detection logic processes these normalized records.
+All development and testing were performed locally using synthetic security data. No live AWS account, paid language model API, or production security infrastructure was required.
 
-The example dataset contains six console login events, including five failed logins from 198.51.100.50 and one successful login from another IP. The detector identifies the simulated brute-force activity. This is synthetic data, not a live AWS integration.
-3. AWS IAM Security Detection
-The IAM parser processes synthetic CreateAccessKey events, including event time, API operation, source IP, actor, and target user.
+---
 
-Implemented rule: IAM self-service access key creation
-Parameter	Value
-AWS API operation	CreateAccessKey
-Detection condition	Actor equals target IAM user
-Alert severity	MEDIUM
-Alert status	needs_investigation
+## 2. Introduction
 
+### 2.1 Background
 
-The synthetic IAM dataset contains two access key creation events: an administrative example and a self-service example. The latter produces an investigation alert. Self-service key creation is not inherently malicious and does not prove account compromise.
-4. Deterministic SOC Investigator
-src/agents/investigator.py accepts IAM alerts and produces structured investigation results, including alert details, login evidence, findings, recommended analyst actions, and investigation status.
+Modern cloud environments generate large volumes of security events, including authentication attempts, IAM operations, and administrative activities. Security analysts must review these events to identify suspicious behavior, investigate potential incidents, and determine appropriate responses.
 
-The investigator uses a read-only login lookup and supports optional AI analysis via investigate_alert(alert, use_ai=True). Without that option, investigation remains deterministic.
-5. Read-Only CloudTrail Evidence Lookup
-src/agents/investigation_tools.py provides lookup_login_activity(source_ip), which searches locally available synthetic ConsoleLogin records and returns matching events and an event count.
+Traditional rule-based security detections are useful for identifying predefined attack patterns. However, effective incident investigation also requires contextual analysis, evidence correlation, and transparent decision-making.
 
-When no matching events are found, that result applies only to the available dataset; it does not establish that an account or IP is safe.
-6. Local LLM-Assisted Investigation (Day 7)
-src/agents/llm_client.py uses Ollama and qwen3:4b to produce advisory security analysis based on supplied investigation evidence. The prompt asks the model to distinguish observations from suspicions, avoid inventing evidence, and recommend human review rather than automatic blocking.
+Agentic AI offers opportunities to assist analysts by selecting investigation tools, retrieving relevant evidence, and generating contextual explanations.
 
-Prompt instructions can reduce unsupported conclusions but cannot guarantee factual accuracy or prompt-injection resistance. AI output is advisory and must be checked against evidence.
-7. Controlled AI Tool Selection and Execution (Day 8)
-The agentic workflow introduces four modules:
-File	Responsibility
-src/agents/tool_registry.py	Lists approved tools and exposes their metadata
-src/agents/tool_selector.py	Requests a JSON tool recommendation from local Qwen3 and validates it
-src/agents/tool_executor.py	Rejects unregistered tools and invalid parameter sets before execution
-src/agents/agentic_workflow.py	Connects tool selection to a single read-only investigation call
+Such systems also introduce security concerns, including inaccurate AI-generated information, unauthorized tool execution, insufficient auditability, and uncontrolled automated actions.
 
+SentinelAI investigates these opportunities and limitations through a controlled, local-first development environment.
 
-Current approved tool: lookup_login_activity, requiring source_ip.
+### 2.2 Purpose of the Lab
 
-The selector uses Ollama's JSON schema output mode, checks tool names and parameter structure, and derives the final lookup IP from the original alert rather than the LLM's copied value. It also checks the original IP with Python's ipaddress module.
+The purpose of Day 9 was to extend SentinelAI's existing AI-directed investigation workflow with structured state management and audit logging.
 
-The executor rejects unauthorized tool names, missing parameters, and unexpected parameters. A tool's read_only registry flag is a policy declaration; it is not an independent sandbox or runtime permission boundary. Only reviewed read-only functions should be registered.
+Before Day 9, the platform could select and execute an approved read-only investigation tool. However, its workflow did not maintain a comprehensive record of investigation progress or execution history.
 
-Verified end-to-end scenario: For a synthetic brute-force alert, Qwen3 selected lookup_login_activity. Although the model incorrectly reproduced the IP as 198.5:100.50, application logic supplied the validated original 198.51.100.50 to the executor. The lookup returned five matching failed login events, and the workflow completed successfully.
+The Day 9 implementation addresses these limitations by introducing a dedicated investigation state module and integrating it into the existing agentic workflow.
 
-This is single-step, AI-directed tool selection, not autonomous multi-step investigation or AWS remediation.
-Preliminary Detection Evaluation
-The initial brute-force evaluation used a small synthetic dataset containing six unique source IP addresses: five labeled benign and one labeled malicious.
-Confusion Matrix
-Metric	Result
-True positives (TP)	1
-False positives (FP)	0
-True negatives (TN)	5
-False negatives (FN)	0
+### 2.3 Lab Objectives
 
+The primary objectives were to:
 
-Performance Metrics
-Metric	Result
-Accuracy	100.00%
-Precision	100.00%
-Recall	100.00%
-F1 score	100.00%
-False positive rate	0.00%
+1. Implement structured investigation state initialization.
+2. Generate unique identifiers for individual investigations.
+3. Track investigation progress through defined statuses.
+4. Record state transitions using UTC timestamps.
+5. Maintain audit records of successful tool executions.
+6. Introduce a configurable tool execution limit.
+7. Enforce the execution limit before tool invocation.
+8. Handle successful, failed, and no-tool-selected investigations.
+9. Preserve compatibility with existing security detection and investigation components.
+10. Validate the implementation using automated tests.
 
+---
 
-Evaluation limitation: These figures describe a very small synthetic test set and are not evidence of real-world detection effectiveness. Future evaluation should include larger datasets, more benign scenarios, varied attack patterns, and adversarial tests.
-Automated Testing
-Latest verified result: 25 tests passed in 1.50 seconds on Windows using Python 3.13.17 and pytest 9.2.0.
-Component	Covered behaviors	Tests
-Authentication detection	Thresholds, windows, malformed input, alert persistence, CloudTrail integration	10
-IAM detection	Self-service and administrative access key events	2
-SOC investigator	Missing login evidence; mocked AI-enabled investigation	2
-LLM client	Mocked Ollama analysis	1
-Tool executor	Approved execution, unauthorized tools, missing/extra parameters	4
-AI tool selector	Original IP preservation, invalid IP, unauthorized tools, unexpected fields	4
-Agentic workflow	Selected-tool execution and no-tool path (mocked)	2
-Total		25
+## 3. Lab Environment and Technology Stack
 
+### 3.1 Development Environment
 
-The tests use synthetic inputs and mocks. The end-to-end Day 8 scenario was also run manually against the local model and CloudTrail fixture. Neither the tests nor the manual scenario establish production readiness.
+| Component | Configuration |
+|---|---|
+| Operating system | Windows |
+| Programming language | Python 3.13.17 |
+| Development environment | Visual Studio Code |
+| Terminal | PowerShell |
+| Virtual environment | Python `.venv` |
+| Testing framework | Pytest 9.2.0 |
+| Local AI runtime | Ollama |
+| Language model | Qwen3 4B (`qwen3:4b`) |
+| Security datasets | Synthetic authentication and AWS CloudTrail JSON |
+| Version control | Git and GitHub |
 
-Run the entire suite:
+### 3.2 Key Python Modules
+
+| Module | Function |
+|---|---|
+| `src/detector.py` | Authentication brute-force detection |
+| `src/cloudtrail_parser.py` | CloudTrail authentication event normalization |
+| `src/iam_parser.py` | IAM event parsing |
+| `src/iam_detector.py` | IAM security detection |
+| `src/agents/investigator.py` | Deterministic and optional AI-assisted investigation |
+| `src/agents/llm_client.py` | Local LLM security analysis |
+| `src/agents/investigation_tools.py` | Read-only CloudTrail evidence lookup |
+| `src/agents/tool_registry.py` | Approved investigation tool registry |
+| `src/agents/tool_selector.py` | AI-assisted tool selection |
+| `src/agents/tool_executor.py` | Controlled tool execution |
+| `src/agents/agentic_workflow.py` | Agentic investigation orchestration |
+| `src/agents/investigation_state.py` | Investigation state and audit management |
+
+### 3.3 Dataset Description
+
+The project uses synthetic security datasets to simulate cloud security events.
+
+The authentication dataset includes examples of successful and failed login attempts. A synthetic CloudTrail dataset contains six `ConsoleLogin` events, including five failed authentication attempts from the same source IP address.
+
+The IAM dataset contains two simulated `CreateAccessKey` operations: an administrative event and a self-service access key creation event.
+
+These datasets support reproducible testing without requiring access to real AWS infrastructure or sensitive production records.
+
+---
+
+## 4. System Architecture
+
+### 4.1 Architecture Overview
+
+SentinelAI separates security event processing, detection logic, AI-assisted tool selection, and investigation management into modular components.
+
+The Day 9 architecture adds investigation state tracking and audit recording to the existing workflow.
+
+**Investigation workflow:**
+
+```text
+          Synthetic Security Events
+                    |
+                    v
+             Security Parsers
+                    |
+                    v
+             Detection Engines
+                    |
+                    v
+            Structured Security Alert
+                    |
+                    v
+          Initialize Investigation State
+                    |
+                    v
+             Local Qwen3 Model
+                    |
+                    v
+           Approved Tool Selection
+                    |
+                    v
+          Validate Execution Limit
+                    |
+                    v
+          Controlled Tool Executor
+                    |
+                    v
+          Read-Only Evidence Lookup
+                    |
+                    v
+           Record Tool Execution
+                    |
+                    v
+           Update Investigation State
+                    |
+                    v
+          Investigation Result & Audit Log
+                    |
+                    v
+              Analyst Review
+```
+
+### 4.2 Architectural Design Principles
+
+The implementation follows several important principles:
+
+- **Modularity:** Detection, investigation, AI inference, and state management are implemented in separate modules.
+- **Controlled execution:** The AI can recommend tools only from an approved registry.
+- **Read-only investigation:** The existing approved tool retrieves local security evidence without modifying cloud resources.
+- **Auditability:** Investigation transitions and successful tool executions are recorded.
+- **Human oversight:** AI-generated findings remain advisory.
+- **Local-first operation:** The prototype does not depend on deployed AWS infrastructure or paid AI services.
+
+The current implementation supports a single AI-selected tool call per investigation. Iterative agent planning and multi-step orchestration remain future development objectives.
+
+---
+
+## 5. Methodology and Implementation
+
+### 5.1 Step 1 — Investigation State Initialization
+
+**Objective:** Create a structured state object to maintain investigation information.
+
+A new module was created:
+
+`src/agents/investigation_state.py`
+
+The module introduces the function:
+
+`create_investigation_state(alert)`
+
+This function accepts a security alert and creates an initial investigation record.
+
+The state contains the following fields:
+
+| Field | Description |
+|---|---|
+| `investigation_id` | Unique UUID assigned to the investigation |
+| `alert` | Original security alert |
+| `status` | Current investigation status |
+| `current_step` | Current workflow stage |
+| `tool_executions` | Recorded successful tool executions |
+| `audit_log` | Investigation activity history |
+| `max_tool_calls` | Maximum permitted recorded tool calls |
+| `tool_calls_used` | Number of successful executions recorded |
+| `created_at` | UTC investigation creation timestamp |
+| `completed_at` | UTC completion timestamp, initially null |
+
+The function uses Python's `uuid` module to generate unique identifiers and the `datetime` module to record UTC timestamps.
+
+**Verification:** A sample brute-force alert was passed to the initialization function. The resulting JSON contained an investigation identifier, an `initialized` status, empty execution and audit lists, and a zero tool-call count.
+
+**Result:** Investigation state initialization completed successfully.
+
+### 5.2 Step 2 — Investigation State Transitions
+
+**Objective:** Track changes in investigation progress.
+
+The function `update_investigation_state()` was added to manage status updates.
+
+Supported statuses include:
+
+- `initialized`
+- `selecting_tool`
+- `executing_tool`
+- `completed`
+- `failed`
+
+The function validates the requested status and prevents further updates after an investigation reaches a terminal state.
+
+Each transition produces an audit record containing the timestamp, previous status, new status, and workflow step.
+
+**Example transition:**
+
+```text
+Previous status: initialized
+New status: selecting_tool
+Current step: tool_selection
+Audit entries: 1
+```
+
+When an investigation reaches `completed` or `failed`, the function also records a completion timestamp.
+
+**Result:** State transitions and audit logging were successfully verified.
+
+### 5.3 Step 3 — Tool Execution Recording
+
+**Objective:** Maintain an auditable history of successful investigation tool executions.
+
+The function `record_tool_execution()` was implemented.
+
+It validates the execution record, checks the current investigation state, and verifies that the configured tool-call limit has not been reached.
+
+A valid execution record contains:
+
+```python
+{
+    "tool_name": "lookup_login_activity",
+    "parameters": {
+        "source_ip": "198.51.100.50"
+    },
+    "result": {
+        "count": 5
+    },
+    "status": "success"
+}
+```
+
+After a successful record is accepted, the function:
+
+1. Adds a timestamped entry to `tool_executions`.
+2. Increments `tool_calls_used`.
+3. Adds a corresponding tool execution event to `audit_log`.
+
+The function currently records successful tool executions rather than all attempted executions.
+
+**Result:** Tool execution recording and audit entry generation were verified.
+
+### 5.4 Step 4 — Tool Execution Limit Validation
+
+**Objective:** Prevent an investigation from recording more tool executions than permitted.
+
+The initial state configuration sets:
+
+```python
+"max_tool_calls": 1,
+"tool_calls_used": 0
+```
+
+A validation exercise attempted to record the same execution twice.
+
+The first record was accepted. The second attempt raised a `RuntimeError`.
+
+**Observed terminal output:**
+
+```text
+PASS: Second execution was rejected.
+Reason: Investigation tool execution limit reached.
+Tool calls recorded: 1
+Execution records: 1
+```
+
+This confirmed that the state recorder rejects additional successful execution records after reaching the configured limit.
+
+The execution limit was subsequently checked before tool invocation in the integrated workflow.
+
+**Result:** Execution limit validation passed.
+
+### 5.5 Step 5 — Integration with the Agentic Investigation Workflow
+
+**Objective:** Integrate state management into the existing Day 8 agentic workflow.
+
+The existing file was updated:
+
+`src/agents/agentic_workflow.py`
+
+The updated workflow performs the following operations:
+
+1. Initializes an investigation state.
+2. Updates the status to `selecting_tool`.
+3. Requests a tool recommendation from the local AI selector.
+4. Completes the investigation if no tool is selected.
+5. Checks the tool execution limit before invoking a selected tool.
+6. Updates the status to `executing_tool`.
+7. Executes the approved read-only investigation tool.
+8. Records the successful execution and audit event.
+9. Updates the investigation status to `completed`.
+10. Returns the investigation result with its associated state.
+
+If an exception occurs, the workflow records an error event and transitions the investigation to `failed`.
+
+The integration preserves the existing result fields and adds an `investigation_state` field.
+
+**Result:** State management was successfully integrated into the agentic workflow.
+
+### 5.6 Step 6 — Existing Test Compatibility
+
+After integrating the new state management module, the existing test suite was executed.
+
+**Initial result:** 24 tests passed and one test failed.
+
+The failure occurred because a mocked tool execution result in `tests/test_agentic_workflow.py` did not include the `parameters` field required by the new execution recorder.
+
+The test fixture was updated to match the actual tool executor's expected response structure.
+
+**Subsequent result:** All 25 existing tests passed.
+
+This demonstrated compatibility between the updated workflow and the previously implemented detection and investigation components.
+
+### 5.7 Step 7 — Automated Investigation State Testing
+
+A new test file was created:
+
+`tests/test_investigation_state.py`
+
+Six automated tests were implemented.
+
+| Test | Purpose | Result |
+|---|---|---|
+| Investigation initialization | Validate initial state fields | Passed |
+| State transition | Validate status changes and audit entries | Passed |
+| Invalid status rejection | Reject unsupported statuses | Passed |
+| Execution recording | Verify execution and audit records | Passed |
+| Execution limit enforcement | Reject a second execution record | Passed |
+| Completed-state protection | Prevent changes after completion | Passed |
+
+**Observed result:**
+
+```text
+6 passed in 0.07s
+```
+
+### 5.8 Step 8 — Agentic Workflow Audit Testing
+
+Additional tests were introduced in `tests/test_agentic_workflow.py`.
+
+These tests verify three important investigation scenarios.
+
+**Scenario A: Successful investigation**
+
+A mocked AI selector chooses `lookup_login_activity`, and the mocked executor returns a successful result.
+
+The test confirms that the investigation completes, one execution is recorded, and the audit history includes the expected status transitions.
+
+**Scenario B: Tool execution failure**
+
+A simulated `RuntimeError` is raised during evidence retrieval.
+
+The workflow records an error event, transitions to `failed`, and preserves the investigation identifier and completion timestamp.
+
+**Scenario C: No tool selected**
+
+The AI selector returns no tool.
+
+The workflow completes without invoking the executor, records the completion transition, and maintains a tool-call count of zero.
+
+**Observed result:**
+
+```text
+5 passed in 0.40s
+```
+
+These tests use mocked dependencies and do not require live LLM inference.
+
+---
+
+## 6. Testing and Results
+
+### 6.1 Final Automated Test Results
+
+The complete SentinelAI test suite was executed using:
+
+```powershell
 python -m pytest -v
-Run component tests:
-python -m pytest tests/test_detector.py -v
-python -m pytest tests/test_iam_detector.py -v
-python -m pytest tests/test_investigator.py -v
-python -m pytest tests/test_llm_client.py -v
-python -m pytest tests/test_tool_executor.py -v
-python -m pytest tests/test_tool_selector.py -v
-python -m pytest tests/test_agentic_workflow.py -v
-Running SentinelAI Locally
-Prerequisites
-- Python 3.13 (tested version: 3.13.17)
-- Git and a Python-compatible editor such as Visual Studio Code
-- Ollama and the local Qwen3 4B model for AI-enabled workflows
-- Pytest for automated tests
-Clone the Repository
-git clone https://github.com/Nj2310/sentinelai-agentic-cloud-soc.git
-cd sentinelai-agentic-cloud-soc
-Create and Activate a Virtual Environment
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-Install Python Dependencies
-python -m pip install pytest ollama
-Prepare the Local Model (for AI Features)
-Install Ollama separately, then download the model:
-ollama pull qwen3:4b
-Ensure the Ollama service is running before using AI-enabled workflows. Non-AI detection tests can run without model inference.
-Run Parsers and Detectors
-python src/detector.py
-python src/cloudtrail_parser.py
-python src/iam_parser.py
-python src/iam_detector.py
-Run a Single-Step Agentic Investigation
-From the repository root, with Ollama available:
-python -c "from src.agents.agentic_workflow import run_agentic_investigation; import json; alert = {'alert_type': 'BRUTE_FORCE', 'source_ip': '198.51.100.50', 'severity': 'high', 'description': 'Five failed login attempts from the same IP address'}; print(json.dumps(run_agentic_investigation(alert), indent=2))"
-This example uses synthetic local CloudTrail data. It asks Qwen3 to select an approved tool and then performs a validated, read-only lookup. Local model inference may take time on CPU-based hardware.
-Run All Tests
-python -m pytest -v
-Development Progress
-Project status: Active development
-Current phase: Day 8 — Controlled Agentic Investigation Workflow (implemented and locally verified; documentation/commit pending)
-Day 1 — Environment Setup and Initial Detection
-- Set up Python, project structure, Git, and GitHub.
-- Implemented CSV authentication ingestion and brute-force detection.
-- Added JSON alerts and MITRE ATT&CK T1110 mapping.
-Status: Completed
-Day 2 — Detection Evaluation
-- Implemented labeled synthetic evaluation and confusion matrix metrics.
-- Documented the limits of the small evaluation dataset.
-Status: Completed
-Day 3 — Automated Detection Testing
-- Integrated pytest, five initial tests, and reusable fixtures.
-Status: Completed
-Day 4 — Detection Reliability Improvements
-- Added optional alert persistence and handling for invalid timestamps/missing IPs.
-- Expanded tests and improved isolation.
-Status: Completed
-Day 5 — AWS CloudTrail Integration
-- Created synthetic ConsoleLogin events and a normalization parser.
-- Connected CloudTrail authentication events to the existing detector.
-Status: Completed
-Day 6 — IAM Detection and Investigation Foundation
-- Created synthetic IAM CreateAccessKey events.
-- Implemented IAM parsing and self-service access key detection.
-- Added deterministic investigation and read-only login evidence lookup.
-- Verified 13 automated tests.
-Status: Completed
-Day 7 — Local LLM Integration (Qwen3 + Ollama)
-- Installed Ollama and downloaded qwen3:4b for local inference.
-- Created src/agents/llm_client.py and optional AI-enabled investigator analysis.
-- Added evidence-grounding prompt instructions and mocked tests.
-- Ran an AI-assisted IAM investigation on synthetic evidence.
-- Verified 15 automated tests and pushed Day 7 changes to GitHub.
-Status: Completed and published
-Day 8 — Controlled Agentic Tool Selection and Execution
-- Implemented an allowlisted tool registry and read-only tool executor.
-- Added validation for unauthorized tools and missing/unexpected parameters.
-- Integrated Qwen3-based JSON tool selection using an explicit response schema.
-- Prevented model-generated IP transcription errors from changing the lookup target.
-- Added original alert IP format validation using ipaddress.
-- Connected AI tool selection with the controlled executor in a single-step workflow.
-- Verified an end-to-end synthetic brute-force investigation returning five matching login events.
-- Added automated selector, executor, and workflow tests.
-- Verified the complete suite: 25 tests passed.
-Status: Implementation and local validation completed; README update and Git commit pending
-Agentic AI Development Roadmap
-Phase 1 — Local LLM Integration
-Implemented: Local Ollama/Qwen3 inference, AI-assisted investigation summaries, and structured prompting.
+```
 
-Further work: Evaluation of factuality, latency, and adversarial prompt behavior.
-Phase 2 — Agentic Investigation Workflows
-Implemented: One-step AI tool recommendation, approved-tool registry, parameter validation, and controlled read-only execution.
+**Observed terminal result:**
 
-Planned: LangGraph orchestration, explicit investigation state, multi-step correlation, execution limits, stopping conditions, and richer audit trails.
-Phase 3 — Intelligent Security Analysis
-- Explore machine learning-based anomaly detection.
-- Implement contextual risk scoring and alert prioritization.
-- Evaluate AI-generated findings against known synthetic scenarios.
-- Measure unsupported claims and investigation errors.
-Phase 4 — Security Controls for AI Agents
-Implemented in prototype: Tool allowlisting, basic schema/parameter checks, original alert IP validation, and read-only tool design.
+```text
+collected 34 items
 
-Planned: Stronger prompt-injection defenses, output validation, independent execution isolation, least-privilege controls, adversarial tests, and human approval mechanisms for any future disruptive actions.
-Phase 5 — SOC Dashboard and Automation
-- Develop a Streamlit dashboard for alerts, evidence, and AI findings.
-- Generate structured incident reports.
-- Add GitHub Actions continuous testing.
-- Explore Terraform-based cloud security research.
-Security and Responsible AI Principles
-1. Synthetic data: Avoid exposing sensitive production logs.
-2. Read-only investigation: Favor evidence collection over infrastructure changes.
-3. Human oversight: Treat AI findings as advisory; require approval before any future disruptive response.
-4. Evidence grounding: Keep observations distinct from inferences and recommendations.
-5. Tool allowlisting: Permit only explicitly registered investigation functions.
-6. Parameter integrity: Validate inputs and derive investigation targets from original evidence, not model transcriptions.
-7. Reproducibility: Maintain tests and version-controlled synthetic fixtures.
-8. Transparent evaluation: Do not generalize small synthetic results to production accuracy.
-9. Responsible AI: Continue research into hallucinations, prompt injection, and unsafe tool execution.
-These are guiding principles; not all defense-in-depth controls are implemented.
-Project Scope and Limitations
-SentinelAI is a local-first educational research prototype. It currently uses synthetic authentication and AWS CloudTrail-style records.
+34 passed in 0.50s
+```
 
-The platform does not currently:
-- Connect to live AWS accounts or ingest production CloudTrail telemetry.
-- Use a deployed SIEM or EDR system.
-- Perform autonomous multi-step investigation planning.
-- Enforce tool permissions through a separate OS-level sandbox.
-- Execute AWS remediation or other disruptive security actions.
-- Provide production-grade incident response capabilities.
-The tool registry's read_only flag is an application-level policy indicator. Its safety depends on which functions are registered and how execution is controlled. Local LLM output may be malformed, inaccurate, or affected by adversarial input despite schema validation and prompting.
-Future Research Directions
-- Advanced AWS IAM detections and event correlation.
-- Cloud identity anomaly detection and threat intelligence enrichment.
-- Stateful, multi-step agent orchestration and auditability.
-- Prompt injection and tool misuse testing.
-- LLM output validation and evidence provenance.
-- Incident response reporting informed by NIST guidance.
-- Security evaluation, CI, and interactive SOC dashboards.
-Disclaimer
-SentinelAI is an educational and research project for hands-on learning, experimentation, and cybersecurity portfolio development. All incidents and datasets described here are synthetic. Preliminary detection metrics are not production performance claims.
+### 6.2 Test Coverage Summary
 
-The prototype is not intended for production monitoring or autonomous incident response. AI-generated recommendations and any future automation require independent validation and appropriate human oversight before operational use.
+| Component | Number of Tests | Result |
+|---|---:|---|
+| Authentication detection | 10 | Passed |
+| IAM security detection | 2 | Passed |
+| Investigation state management | 6 | Passed |
+| Deterministic and AI-assisted investigator | 2 | Passed |
+| Local LLM client | 1 | Passed |
+| Controlled tool executor | 4 | Passed |
+| AI tool selector | 4 | Passed |
+| Agentic investigation workflow | 5 | Passed |
+| **Total** | **34** | **All passed** |
+
+### 6.3 Key Findings
+
+The testing confirmed that:
+
+- Investigations can be assigned unique identifiers.
+- State transitions are recorded with timestamps.
+- Successful tool executions generate structured audit entries.
+- The configured execution record limit is enforced.
+- The integrated workflow checks the limit before tool invocation.
+- Completed investigations reject subsequent state updates.
+- Simulated tool failures produce structured failed investigation results.
+- No-tool-selected investigations finish without invoking an executor.
+- Existing authentication, IAM, and AI-related tests remain functional.
+
+### 6.4 Evaluation Limitations
+
+The automated tests validate defined behavior using synthetic inputs and mocked dependencies.
+
+They do not establish production readiness, comprehensive security coverage, or reliable LLM behavior under adversarial conditions.
+
+The Day 9 validation primarily exercised deterministic state management and mocked workflow interactions. The supplied results do not establish a new end-to-end Day 9 investigation run using live local Qwen3 inference.
+
+---
+
+## 7. Security Considerations
+
+### 7.1 Tool Allowlisting
+
+The existing tool registry restricts execution to explicitly approved investigation functions.
+
+This reduces the possibility of an AI-generated recommendation directly invoking an arbitrary function.
+
+However, registry metadata alone does not provide independent operating-system-level isolation.
+
+### 7.2 Input Validation
+
+The Day 8 implementation validates selected tool names and parameter structures.
+
+For source-IP lookups, the final execution target is derived from the original alert rather than relying on the LLM's reproduced IP address.
+
+This safeguard addresses an observed local-model transcription error.
+
+### 7.3 Investigation Auditability
+
+Day 9 improves traceability by recording investigation identifiers, state transitions, successful execution details, and error types.
+
+These records provide a foundation for future analyst review and troubleshooting.
+
+The audit log is currently an in-memory application structure, not an independently protected or persistent security audit system.
+
+### 7.4 Execution Limits
+
+The current workflow checks the tool-call limit before invoking an approved tool.
+
+However, the counter increments after successful execution recording. Failed attempts are not counted in the same way.
+
+Additional controls would be required before introducing retries, concurrent execution, or multi-step agent loops.
+
+### 7.5 Human Oversight
+
+The platform does not automatically block users, revoke IAM credentials, or modify AWS infrastructure.
+
+AI-generated analysis and investigation findings remain advisory and require human validation.
+
+---
+
+## 8. Challenges Encountered and Resolutions
+
+| Challenge | Cause | Resolution |
+|---|---|---|
+| Existing workflow test failed | Mock execution lacked required `parameters` field | Updated the test fixture to match the executor response |
+| Need for investigation traceability | Original workflow returned results without detailed lifecycle history | Added investigation state and audit logging |
+| Risk of uncontrolled tool execution | No explicit workflow-level pre-execution limit | Added a limit check before tool invocation |
+| Handling investigation errors | Tool failures required structured reporting | Added failed-state handling and error audit entries |
+| Avoiding unnecessary tool calls | Some investigations may not require evidence lookup | Added an auditable no-tool completion path |
+
+These changes improved the structure and testability of SentinelAI without introducing live cloud operations.
+
+---
+
+## 9. Development Progress Summary
+
+| Development Day | Major Accomplishment | Status |
+|---|---|---|
+| Day 1 | Python environment, authentication ingestion, brute-force detection | Completed |
+| Day 2 | Synthetic detection evaluation and confusion matrix | Completed |
+| Day 3 | Initial automated detection tests | Completed |
+| Day 4 | Detection reliability and input handling improvements | Completed |
+| Day 5 | Synthetic AWS CloudTrail authentication integration | Completed |
+| Day 6 | IAM detection and deterministic SOC investigation | Completed |
+| Day 7 | Local Qwen3 integration through Ollama | Completed |
+| Day 8 | Controlled AI tool selection and read-only execution | Completed |
+| Day 9 | Investigation state management, audit logging, and stopping conditions | Implemented and tested |
+
+Day 8 was committed and published to GitHub. Day 9 changes have been validated locally but have not yet been committed or published.
+
+---
+
+## 10. Future Improvements
+
+The next development phases can extend SentinelAI in several areas.
+
+**Investigation orchestration:** Introduce more explicit transition rules, multi-step investigation states, and controlled evidence correlation using a framework such as LangGraph.
+
+**Auditability:** Add persistent, structured investigation logs with stronger evidence provenance and safeguards against modification.
+
+**Execution safety:** Track tool attempts as well as successful executions, introduce timeout handling, and strengthen controls for retries and failures.
+
+**Security evaluation:** Test prompt-injection scenarios, unsupported LLM conclusions, malformed tool outputs, and adversarial security events.
+
+**SOC visualization:** Develop a Streamlit dashboard for security alerts, investigation progress, evidence, and analyst review.
+
+**Continuous integration:** Introduce GitHub Actions to execute automated tests when repository changes are submitted.
+
+All future functionality should preserve the project's local-first approach, read-only investigation principles, and human oversight requirements.
+
+---
+
+## 11. Conclusion
+
+Day 9 successfully extended SentinelAI's agentic investigation capabilities through structured state management and audit logging.
+
+The implementation introduced unique investigation identifiers, lifecycle status tracking, execution records, timestamped audit entries, execution limit checks, and structured failure handling.
+
+Automated validation confirmed that the new components work alongside the existing authentication detection, IAM monitoring, local LLM integration, and controlled tool execution modules.
+
+**The final test suite completed with 34 passing tests and zero failures.**
+
+The results demonstrate progress toward a more transparent and controlled AI-assisted SOC investigation platform. Although SentinelAI remains a local research prototype, its modular architecture and growing automated test suite provide a foundation for future stateful agent orchestration, security evaluation, and analyst-facing capabilities.
+
+---
+
+## 12. Project Repository
+
+**GitHub:** https://github.com/Nj2310/sentinelai-agentic-cloud-soc
+
+**Latest published phase:** Day 8  
+**Current locally validated phase:** Day 9
+
+---
+
+## 13. Disclaimer
+
+SentinelAI is an educational cybersecurity research and portfolio development project.
+
+All described security events and datasets are synthetic. The platform is not intended for production security monitoring, automated incident response, or autonomous cloud remediation.
+
+The reported test results validate specific implementation behaviors and should not be interpreted as evidence of real-world detection accuracy, operational resilience, or production security readiness.
+
+Any future operational deployment would require additional security testing, independent validation, appropriate access controls, and human oversight.
