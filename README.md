@@ -132,7 +132,7 @@ These datasets support reproducible testing without requiring access to real AWS
 
 ### Day 10 — Architecture Diagram
 
-![SentinelAI Day 10 architecture showing AI-assisted investigations, tool-attempt tracking, execution safety, and state management](sentinelai-day10-architecture.png)
+[SentinelAI Day 10 architecture showing AI-assisted investigations, tool-attempt tracking, execution safety, and state management](sentinelai-day10-architecture.png)
 
 ### 4.1 Architecture Overview
 
