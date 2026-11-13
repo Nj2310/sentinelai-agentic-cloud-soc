@@ -51,26 +51,34 @@ SentinelAI investigates these opportunities and limitations through a controlled
 
 ### 2.2 Purpose of the Lab
 
-The purpose of Day 9 was to extend SentinelAI's existing AI-directed investigation workflow with structured state management and audit logging.
+The purpose of Day 10 was to strengthen SentinelAI's existing agentic investigation workflow by improving execution safety, tool-attempt accountability, and investigation state-transition validation.
 
-Before Day 9, the platform could select and execute an approved read-only investigation tool. However, its workflow did not maintain a comprehensive record of investigation progress or execution history.
+Day 9 established the foundation for structured investigation state management, unique investigation identifiers, lifecycle tracking, audit logging, and execution limits.
 
-The Day 9 implementation addresses these limitations by introducing a dedicated investigation state module and integrating it into the existing agentic workflow.
+Day 10 extended these capabilities by introducing explicit tool-attempt tracking before execution, ensuring that failed tool executions count toward the configured attempt limit.
+
+The implementation also strengthened investigation lifecycle controls by validating state transitions against explicitly permitted paths and rejecting invalid transitions without modifying the investigation state or recording a successful transition.
+
+Together, these improvements enhance the transparency, predictability, and accountability of SentinelAI's controlled, read-only AI-assisted investigation workflow.
+
+The implementation remains a local-first cybersecurity research prototype using synthetic security data and application-level execution controls.
 
 ### 2.3 Lab Objectives
 
-The primary objectives were to:
+The primary objectives of Day 10 were to:
 
-1. Implement structured investigation state initialization.
-2. Generate unique identifiers for individual investigations.
-3. Track investigation progress through defined statuses.
-4. Record state transitions using UTC timestamps.
-5. Maintain audit records of successful tool executions.
-6. Introduce a configurable tool execution limit.
-7. Enforce the execution limit before tool invocation.
-8. Handle successful, failed, and no-tool-selected investigations.
-9. Preserve compatibility with existing security detection and investigation components.
-10. Validate the implementation using automated tests.
+1. Extend the existing Day 9 investigation state management framework.
+2. Introduce a dedicated `tool_attempts` counter to track attempted tool executions.
+3. Maintain separate counters for attempted and successfully recorded tool executions.
+4. Record tool invocation attempts before execution begins.
+5. Ensure failed tool executions count toward the configured execution-attempt limit.
+6. Enforce a maximum of one tool attempt per investigation in the current workflow.
+7. Validate investigation state transitions against explicitly permitted lifecycle paths.
+8. Reject invalid state transitions without modifying the investigation status or recording a successful transition.
+9. Preserve structured audit records for investigation transitions, tool attempts, successful executions, and errors.
+10. Maintain compatibility with existing authentication detection, IAM monitoring, and AI-assisted investigation components.
+11. Validate the strengthened investigation workflow using automated tests.
+12. Confirm that all 36 automated tests pass without failures.
 
 ---
 
@@ -124,54 +132,98 @@ These datasets support reproducible testing without requiring access to real AWS
 
 ### 4.1 Architecture Overview
 
-SentinelAI separates security event processing, detection logic, AI-assisted tool selection, and investigation management into modular components.
+SentinelAI separates security event processing, detection engineering, AI-assisted investigation, controlled tool execution, and investigation state management into modular Python components.
 
-The Day 9 architecture adds investigation state tracking and audit recording to the existing workflow.
+The current architecture incorporates the Day 9 investigation state and audit logging capabilities alongside Day 10 tool-attempt tracking, execution-limit enforcement, and strict state-transition validation.
 
-**Investigation workflow:**
+**Implemented Investigation Workflow:**
 
 ```text
-          Synthetic Security Events
-                    |
-                    v
-             Security Parsers
-                    |
-                    v
-             Detection Engines
-                    |
-                    v
-            Structured Security Alert
-                    |
-                    v
-          Initialize Investigation State
-                    |
-                    v
-             Local Qwen3 Model
-                    |
-                    v
-           Approved Tool Selection
-                    |
-                    v
-          Validate Execution Limit
-                    |
-                    v
-          Controlled Tool Executor
-                    |
-                    v
-          Read-Only Evidence Lookup
-                    |
-                    v
-           Record Tool Execution
-                    |
-                    v
-           Update Investigation State
-                    |
-                    v
-          Investigation Result & Audit Log
-                    |
-                    v
-              Analyst Review
+           Synthetic Security Events
+          (Authentication / CloudTrail)
+                       |
+                       v
+                Security Parsers
+                       |
+                       v
+                Detection Engines
+           (Brute-Force / IAM Activity)
+                       |
+                       v
+             Structured Security Alert
+                       |
+                       v
+           Initialize Investigation State
+                  (initialized)
+                       |
+                       v
+             AI-Assisted Tool Selection
+                 (selecting_tool)
+                       |
+               +-------+-------+
+               |               |
+          No Tool Selected  Tool Selected
+               |               |
+               v               v
+           completed      Validate Tool Name,
+                          Parameters and Limit
+                               |
+                               v
+                         executing_tool
+                               |
+                               v
+                       Record Tool Attempt
+                       (before execution)
+                               |
+                               v
+                       Controlled Executor
+                               |
+                               v
+                       Read-Only Evidence
+                             Lookup
+                               |
+                       +-------+-------+
+                       |               |
+                    Success          Failure
+                       |               |
+                       v               v
+                Record Successful    Record Error
+                Tool Execution       in Audit Log
+                       |               |
+                       v               v
+                   completed         failed
+                       |               |
+                       +-------+-------+
+                               |
+                               v
+                   Investigation Result
+                     + In-Memory Audit
+                               |
+                               v
+                         Analyst Review
 ```
+
+**Investigation State Transitions:**
+
+| Current State | Permitted Next States |
+|---|---|
+| `initialized` | `selecting_tool`, `failed` |
+| `selecting_tool` | `executing_tool`, `completed`, `failed` |
+| `executing_tool` | `completed`, `failed` |
+| `completed` | None (terminal) |
+| `failed` | None (terminal) |
+
+**Day 10 Execution Safety Controls:**
+
+- Tool attempts are recorded before execution.
+- Failed tool executions count toward the configured attempt limit.
+- The workflow currently permits a maximum of one tool attempt per investigation.
+- Tool names and parameters are validated before execution.
+- Invalid investigation state transitions are rejected.
+- Investigation audit records are maintained in memory.
+- AI-generated findings remain advisory; no autonomous remediation is performed.
+
+**Implementation Scope:** SentinelAI currently operates locally using synthetic security data and a locally hosted Qwen3 model through Ollama. Live AWS integration, production SIEM connectivity, and multi-step autonomous orchestration are not yet implemented.
 
 ### 4.2 Architectural Design Principles
 
@@ -180,7 +232,7 @@ The implementation follows several important principles:
 - **Modularity:** Detection, investigation, AI inference, and state management are implemented in separate modules.
 - **Controlled execution:** The AI can recommend tools only from an approved registry.
 - **Read-only investigation:** The existing approved tool retrieves local security evidence without modifying cloud resources.
-- **Auditability:** Investigation transitions and successful tool executions are recorded.
+- **Auditability:** Investigation state transitions, tool invocation attempts, successful tool executions, and investigation errors are recorded in an in-memory audit log. Day 10 ensures that failed tool executions remain traceable through pre-execution attempt records.
 - **Human oversight:** AI-generated findings remain advisory.
 - **Local-first operation:** The prototype does not depend on deployed AWS infrastructure or paid AI services.
 
@@ -213,9 +265,10 @@ The state contains the following fields:
 | `status` | Current investigation status |
 | `current_step` | Current workflow stage |
 | `tool_executions` | Recorded successful tool executions |
-| `audit_log` | Investigation activity history |
-| `max_tool_calls` | Maximum permitted recorded tool calls |
-| `tool_calls_used` | Number of successful executions recorded |
+| `audit_log` | In-memory investigation activity history |
+| `max_tool_calls` | Maximum permitted tool attempts per investigation |
+| `tool_attempts` | Number of recorded tool attempts, including failed executions |
+| `tool_calls_used` | Number of successfully recorded tool executions |
 | `created_at` | UTC investigation creation timestamp |
 | `completed_at` | UTC completion timestamp, initially null |
 
@@ -329,20 +382,21 @@ The existing file was updated:
 
 The updated workflow performs the following operations:
 
-1. Initializes an investigation state.
-2. Updates the status to `selecting_tool`.
+1. Initializes an investigation state with a unique investigation identifier.
+2. Updates the investigation status to `selecting_tool`.
 3. Requests a tool recommendation from the local AI selector.
 4. Completes the investigation if no tool is selected.
-5. Checks the tool execution limit before invoking a selected tool.
-6. Updates the status to `executing_tool`.
-7. Executes the approved read-only investigation tool.
-8. Records the successful execution and audit event.
-9. Updates the investigation status to `completed`.
-10. Returns the investigation result with its associated state.
+5. Validates the selected tool, its parameters, and the configured execution-attempt limit.
+6. Updates the investigation status to `executing_tool`.
+7. Calls `record_tool_attempt()` to record the attempt and increment `tool_attempts` before execution.
+8. Executes the approved read-only investigation tool.
+9. Records successful tool execution details and increments `tool_calls_used` when execution succeeds.
+10. Updates the investigation status to `completed` after successful execution.
+11. Returns the investigation result with its associated investigation state and audit history.
 
-If an exception occurs, the workflow records an error event and transitions the investigation to `failed`.
+If an exception occurs, the workflow records an error event and transitions the investigation to `failed`. A failed tool execution still counts toward `tool_attempts` because the attempt was recorded before execution began.
 
-The integration preserves the existing result fields and adds an `investigation_state` field.
+The integration preserves the existing investigation result fields and adds an `investigation_state` field containing lifecycle information, execution counters, and audit records.
 
 **Result:** State management was successfully integrated into the agentic workflow.
 
@@ -656,9 +710,21 @@ These changes improved the structure and testability of SentinelAI without intro
 | Day 7 | Local Qwen3 integration through Ollama | Completed |
 | Day 8 | Controlled AI tool selection and read-only execution | Completed |
 | Day 9 | Investigation state management, audit logging, and stopping conditions | Completed and published |
-| Day 10 | Tool-attempt tracking, execution-limit enforcement, strict state transitions, and 36 passing tests | Implemented and tested |
+| Day 10 | Tool-attempt tracking, execution-limit enforcement, strict state transitions, and 36 passing tests | Completed and published |
 
-Days 1–9 have been committed and published to GitHub. Day 10 implementation and documentation updates have been validated locally and are being prepared for publication.
+**Day 10 Status:** Completed, tested, and published to GitHub.
+
+**Day 10 Key Achievements:**
+- Implemented tool-attempt tracking before execution.
+- Enforced a maximum of one tool attempt per investigation.
+- Ensured failed tool executions count toward the configured attempt limit.
+- Implemented strict investigation state-transition validation.
+- Improved investigation auditability and execution safety.
+- Successfully validated the implementation with 36 passing automated tests.
+
+**GitHub Commit:** `21d0f90`
+
+Days 1–10 have been implemented, tested, and published to GitHub. Day 10 strengthens SentinelAI's agentic investigation workflow through execution-safety controls, auditable tool attempts, and validated state transitions.
 
 ---
 
@@ -670,7 +736,7 @@ The next development phases can extend SentinelAI in several areas.
 
 **Auditability:** Add persistent, structured investigation logs with stronger evidence provenance and safeguards against modification.
 
-**Execution safety:** Track tool attempts as well as successful executions, introduce timeout handling, and strengthen controls for retries and failures.
+**Execution safety:** Extend the existing Day 10 tool-attempt tracking and execution-limit controls with timeout handling, stronger failure recovery, controlled retry policies, and safeguards for concurrent investigations. Any future expansion beyond the current single-attempt workflow must preserve strict state-transition validation and prevent failed tool executions from bypassing configured limits.
 
 **Security evaluation:** Test prompt-injection scenarios, unsupported LLM conclusions, malformed tool outputs, and adversarial security events.
 
@@ -684,24 +750,36 @@ All future functionality should preserve the project's local-first approach, rea
 
 ## 11. Conclusion
 
-Day 9 successfully extended SentinelAI's agentic investigation capabilities through structured state management and audit logging.
+Day 10 successfully strengthened SentinelAI's agentic investigation workflow through tool-attempt tracking, execution-limit enforcement, strict state-transition validation, and improved auditability.
 
-The implementation introduced unique investigation identifiers, lifecycle status tracking, execution records, timestamped audit entries, execution limit checks, and structured failure handling.
+Building on Day 9's investigation state management, the Day 10 implementation introduced separate tracking for attempted and successfully recorded tool executions. Failed tool executions now count toward the configured attempt limit, preventing repeated execution attempts from bypassing workflow restrictions.
 
-Automated validation confirmed that the new components work alongside the existing authentication detection, IAM monitoring, local LLM integration, and controlled tool execution modules.
+The investigation lifecycle now enforces explicit permitted state transitions, rejecting invalid transitions and protecting completed or failed investigations from further updates.
 
-**The final test suite completed with 34 passing tests and zero failures.**
+SentinelAI continues to integrate Python-based authentication detection, synthetic AWS CloudTrail and IAM security monitoring, deterministic SOC investigation, and optional AI-assisted analysis using a locally hosted Qwen3 4B model through Ollama.
 
-The results demonstrate progress toward a more transparent and controlled AI-assisted SOC investigation platform. Although SentinelAI remains a local research prototype, its modular architecture and growing automated test suite provide a foundation for future stateful agent orchestration, security evaluation, and analyst-facing capabilities.
+**Final validation result: 36 automated tests passed, with zero failures.**
 
+The implementation remains a local-first cybersecurity research prototype using synthetic security data. Investigation tools are restricted through application-level controls, audit records are maintained in memory, and AI-generated findings remain advisory.
+
+Future development will focus on expanded evidence correlation, controlled multi-step investigations, stronger security evaluation, persistent audit logging, and analyst-facing visualization.
+
+**Day 10 development, automated testing, documentation, and GitHub publication have been completed successfully.**
 ---
 
 ## 12. Project Repository
 
 **GitHub:** https://github.com/Nj2310/sentinelai-agentic-cloud-soc
 
-**Latest published phase:** Day 8  
-**Current locally validated phase:** Day 9
+**Latest published phase:** Day 10
+
+**Current development status:** Day 10 completed, tested, and published to GitHub
+
+**Automated test results:** 36 tests passed, zero failures
+
+**Latest Day 10 commit:** `21d0f90`
+
+**Project maturity:** Local-first cybersecurity research prototype using synthetic security data
 
 ---
 
