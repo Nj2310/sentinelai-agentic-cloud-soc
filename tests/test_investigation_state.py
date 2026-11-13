@@ -55,6 +55,10 @@ def test_tool_execution_recording():
     )
 
     update_investigation_state(
+        state, "selecting_tool", "tool_selection"
+    )
+
+    update_investigation_state(
         state, "executing_tool", "tool_execution"
     )
 
@@ -69,7 +73,13 @@ def test_tool_execution_recording():
 
     assert state["tool_calls_used"] == 1
     assert len(state["tool_executions"]) == 1
-    assert len(state["audit_log"]) == 2
+    # assert len(state["audit_log"]) == 2
+
+    assert len(state["audit_log"]) == 3
+    assert state["audit_log"][0]["new_status"] == "selecting_tool"
+    assert state["audit_log"][1]["new_status"] == "executing_tool"
+    assert state["audit_log"][2]["event"] == "tool_execution"
+
     assert state["tool_executions"][0]["tool_name"] == (
         "lookup_login_activity"
     )
@@ -78,6 +88,10 @@ def test_tool_execution_recording():
 def test_tool_execution_limit_enforced():
     state = create_investigation_state(
         {"alert_type": "BRUTE_FORCE"}
+    )
+
+    update_investigation_state(
+        state, "selecting_tool", "tool_selection"
     )
 
     update_investigation_state(
@@ -106,6 +120,10 @@ def test_completed_investigation_cannot_be_updated():
     )
 
     update_investigation_state(
+        state, "selecting_tool", "tool_selection"
+    )
+
+    update_investigation_state(
         state, "completed", "investigation_complete"
     )
 
@@ -115,3 +133,83 @@ def test_completed_investigation_cannot_be_updated():
         update_investigation_state(
             state, "executing_tool", "tool_execution"
         )
+
+
+def test_tool_attempt_limit_prevents_second_attempt():
+    """Verify a second tool attempt is rejected."""
+
+    import pytest
+    from src.agents.investigation_state import (
+        create_investigation_state,
+        update_investigation_state,
+        record_tool_attempt,
+    )
+
+    state = create_investigation_state({
+        "alert_type": "BRUTE_FORCE",
+        "source_ip": "198.51.100.50",
+    })
+
+    update_investigation_state(
+        state,
+        "selecting_tool",
+        "tool_selection",
+    )
+
+    update_investigation_state(
+        state,
+        "executing_tool",
+        "tool_execution",
+    )
+
+    record_tool_attempt(
+        state,
+        "lookup_login_activity",
+    )
+
+    assert state["tool_attempts"] == 1
+
+    with pytest.raises(
+        RuntimeError,
+        match="Investigation tool attempt limit reached",
+    ):
+        record_tool_attempt(
+            state,
+            "lookup_login_activity",
+        )
+
+    assert state["tool_attempts"] == 1
+
+    attempt_events = [
+        entry for entry in state["audit_log"]
+        if entry.get("event") == "tool_attempt"
+    ]
+
+    assert len(attempt_events) == 1
+
+
+def test_invalid_state_transition_is_rejected():
+    """Prevent skipping required investigation stages."""
+
+    import pytest
+    from src.agents.investigation_state import (
+        create_investigation_state,
+        update_investigation_state,
+    )
+
+    state = create_investigation_state({
+        "alert_type": "BRUTE_FORCE",
+    })
+
+    with pytest.raises(
+        ValueError,
+        match="Invalid investigation state transition",
+    ):
+        update_investigation_state(
+            state,
+            "executing_tool",
+            "tool_execution",
+        )
+
+    assert state["status"] == "initialized"
+    assert state["audit_log"] == []

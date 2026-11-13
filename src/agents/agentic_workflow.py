@@ -34,6 +34,7 @@ from src.agents.investigation_state import (
     create_investigation_state,
     update_investigation_state,
     record_tool_execution,
+    record_tool_attempt,
 )
 
 
@@ -66,13 +67,24 @@ def run_agentic_investigation(alert: dict) -> dict:
             }
 
         # Step 3: Enforce the execution limit BEFORE tool invocation.
-        if state["tool_calls_used"] >= state["max_tool_calls"]:
+        # if state["tool_calls_used"] >= state["max_tool_calls"]:
+        #     raise RuntimeError(
+        #         "Investigation tool execution limit reached."
+        #     )
+
+        if state["tool_attempts"] >= state["max_tool_calls"]:
             raise RuntimeError(
-                "Investigation tool execution limit reached."
+                "Investigation tool attempt limit reached."
             )
+
 
         update_investigation_state(
             state, "executing_tool", "tool_execution"
+        )
+
+        record_tool_attempt(
+            state,
+            selection["tool_name"]
         )
 
         # Step 4: Execute the approved read-only tool.

@@ -1,14 +1,14 @@
 # SentinelAI — Agentic AI Cloud Security Operations Platform
 
-## Technical Lab Report: Investigation State Management and Auditability
+## Technical Lab Report: Investigation State Management, Auditability, and Execution Safety
 
 **Project:** SentinelAI — Agentic AI Cloud Security Operations Platform  
-**Development Phase:** Day 9  
+**Development Phase:** Day 10
 **Project Type:** Cybersecurity Research and Development  
 **Environment:** Python 3.13.17, Windows, Visual Studio Code  
 **Technologies:** Python, AWS CloudTrail (Synthetic), Ollama, Qwen3 4B, Pytest  
 **Development Approach:** Local-First, AI-Assisted Security Operations  
-**Project Status:** Day 9 implementation and automated validation completed
+**Project Status:** Day 10 implementation validated locally — 36 automated tests passed
 
 ---
 
@@ -20,11 +20,16 @@ The platform combines Python-based detection engineering, synthetic AWS CloudTra
 
 During the earlier development phases, SentinelAI progressed from basic authentication brute-force detection to IAM security monitoring, deterministic SOC investigation, AI-assisted analysis, and controlled AI-directed tool execution.
 
-**Day 9 focused on implementing investigation state management and auditability.** The objective was to make investigation workflows more traceable by introducing unique investigation identifiers, status tracking, execution records, audit logs, tool-call limits, and structured failure handling.
+
+**Day 9 introduced investigation state management and auditability. Day 10 strengthened investigation execution safety by implementing tool-attempt tracking, stricter state-transition validation, and improved audit coverage.**
+
+The updated workflow records tool attempts before execution, ensuring that failed tool executions still count toward the investigation's configured attempt limit. State transitions are validated against an explicit set of permitted transitions, preventing invalid investigation lifecycle changes.
+
+These improvements maintain SentinelAI's controlled, read-only investigation design while providing clearer visibility into tool usage and investigation failures.
 
 The implementation was validated using automated tests covering investigation initialization, state transitions, execution recording, stopping conditions, successful investigations, and failure scenarios.
 
-**Final validation result: 34 automated tests passed, with zero failures.**
+**Final validation result: 36 automated tests passed, with zero failures.**
 
 All development and testing were performed locally using synthetic security data. No live AWS account, paid language model API, or production security infrastructure was required.
 
@@ -412,6 +417,72 @@ These tests use mocked dependencies and do not require live LLM inference.
 
 ---
 
+
+### 5.9 Step 9 — Tool-Attempt Tracking and Execution Safety (Day 10)
+
+Day 10 introduced additional execution-safety controls to the SentinelAI investigation workflow.
+
+**Objective:** Ensure that every tool invocation attempt is counted, including attempts that fail during execution.
+
+**Implementation:**
+
+The investigation state now maintains two separate counters:
+
+- `tool_attempts`: Number of recorded tool invocation attempts, including failed executions.
+- `tool_calls_used`: Number of successfully recorded tool executions.
+
+The `record_tool_attempt()` function was introduced in `src/agents/investigation_state.py`.
+
+Before executing an approved investigation tool, the workflow records the attempt and increments `tool_attempts`.
+
+The function also creates an audit entry containing:
+
+- UTC timestamp
+- Event type (`tool_attempt`)
+- Selected tool name
+- Attempt number
+
+The workflow enforces the configured `max_tool_calls` limit against `tool_attempts`, preventing failed executions from bypassing the attempt limit.
+
+**Security significance:**
+
+This control improves accountability and helps prevent repeated tool execution attempts within a single investigation.
+
+The current workflow remains limited to one tool attempt per investigation and does not perform autonomous remediation.
+
+
+### 5.10 Step 10 — Strict Investigation State-Transition Validation (Day 10)
+
+Day 10 introduced explicit state-transition validation to prevent investigations from moving through invalid lifecycle sequences.
+
+**Objective:** Ensure that investigation status changes follow a controlled and predictable workflow.
+
+**Implementation:**
+
+The `update_investigation_state()` function in `src/agents/investigation_state.py` now validates requested transitions against an explicit transition table.
+
+The permitted transitions are:
+
+| Current State | Permitted Next States |
+|---|---|
+| `initialized` | `selecting_tool`, `failed` |
+| `selecting_tool` | `executing_tool`, `completed`, `failed` |
+| `executing_tool` | `completed`, `failed` |
+| `completed` | None |
+| `failed` | None |
+
+Invalid transitions raise a `ValueError` without changing the investigation status or adding a transition audit entry.
+
+For example, an investigation cannot transition directly from `initialized` to `executing_tool` because tool selection must occur first.
+
+The `completed` and `failed` states are terminal, preventing further state updates.
+
+**Security significance:**
+
+Explicit state-transition validation improves workflow consistency, reduces unintended execution paths, and strengthens investigation lifecycle controls.
+
+The implementation enforces application-level workflow rules; it is not a replacement for operating-system isolation or external security controls.
+
 ## 6. Testing and Results
 
 ### 6.1 Final Automated Test Results
@@ -425,9 +496,9 @@ python -m pytest -v
 **Observed terminal result:**
 
 ```text
-collected 34 items
+collected 36 items
 
-34 passed in 0.50s
+36 passed in 0.46s
 ```
 
 ### 6.2 Test Coverage Summary
@@ -436,13 +507,13 @@ collected 34 items
 |---|---:|---|
 | Authentication detection | 10 | Passed |
 | IAM security detection | 2 | Passed |
-| Investigation state management | 6 | Passed |
+| Investigation state management | 8 | Passed |
 | Deterministic and AI-assisted investigator | 2 | Passed |
 | Local LLM client | 1 | Passed |
 | Controlled tool executor | 4 | Passed |
 | AI tool selector | 4 | Passed |
 | Agentic investigation workflow | 5 | Passed |
-| **Total** | **34** | **All passed** |
+| **Total** | **36** | **All passed** |
 
 ### 6.3 Key Findings
 
@@ -458,6 +529,19 @@ The testing confirmed that:
 - No-tool-selected investigations finish without invoking an executor.
 - Existing authentication, IAM, and AI-related tests remain functional.
 
+
+**Additional Day 10 findings:**
+
+- Tool invocation attempts are recorded before execution.
+- Failed tool executions count toward the configured attempt limit.
+- The workflow tracks attempted and successfully recorded tool executions separately.
+- A second tool attempt is rejected when the configured attempt limit has been reached.
+- Invalid investigation state transitions are rejected without modifying the investigation status or recording a successful transition.
+- Completed and failed investigations are treated as terminal states.
+- The existing agentic workflow tests remain compatible with the strengthened execution controls.
+
+The complete Day 10 automated test suite passed all 36 tests with zero failures.
+
 ### 6.4 Evaluation Limitations
 
 The automated tests validate defined behavior using synthetic inputs and mocked dependencies.
@@ -465,6 +549,19 @@ The automated tests validate defined behavior using synthetic inputs and mocked 
 They do not establish production readiness, comprehensive security coverage, or reliable LLM behavior under adversarial conditions.
 
 The Day 9 validation primarily exercised deterministic state management and mocked workflow interactions. The supplied results do not establish a new end-to-end Day 9 investigation run using live local Qwen3 inference.
+
+
+**Day 10 evaluation limitations:**
+
+The Day 10 automated tests validate tool-attempt accounting, execution-limit enforcement, and investigation state-transition rules using controlled test scenarios.
+
+These controls operate at the Python application level. The read-only tool registry represents an application policy boundary, not an operating-system sandbox.
+
+Investigation state and audit records are maintained in memory. They are not currently persisted to an external audit store or protected against tampering.
+
+The workflow currently supports a maximum of one tool attempt per investigation. Multi-step autonomous orchestration, production SIEM integration, and automated incident remediation have not yet been implemented.
+
+The successful execution of 36 automated tests demonstrates correctness for the tested scenarios but does not establish production readiness or comprehensive security coverage.
 
 ---
 
@@ -488,19 +585,41 @@ This safeguard addresses an observed local-model transcription error.
 
 ### 7.3 Investigation Auditability
 
-Day 9 improves traceability by recording investigation identifiers, state transitions, successful execution details, and error types.
+Day 9 introduced investigation identifiers, lifecycle state tracking, execution records, and structured audit entries.
 
-These records provide a foundation for future analyst review and troubleshooting.
+Day 10 expanded audit coverage by recording tool invocation attempts before execution.
 
-The audit log is currently an in-memory application structure, not an independently protected or persistent security audit system.
+The investigation audit log now records:
+
+- Investigation state transitions with UTC timestamps.
+- Tool invocation attempts, including the selected tool name and attempt number.
+- Successful tool execution records.
+- Investigation errors, including the exception type.
+
+Failed tool executions are reflected through their recorded attempt and subsequent investigation failure.
+
+These records improve traceability and support future security analyst review and troubleshooting.
+
+**Current limitation:** Audit records are stored in memory and are not yet persisted to a tamper-resistant external logging system.
 
 ### 7.4 Execution Limits
 
-The current workflow checks the tool-call limit before invoking an approved tool.
+Day 10 strengthened execution-limit enforcement by introducing explicit tool-attempt tracking.
 
-However, the counter increments after successful execution recording. Failed attempts are not counted in the same way.
+The investigation state maintains two counters:
 
-Additional controls would be required before introducing retries, concurrent execution, or multi-step agent loops.
+- `tool_attempts`: Tracks tool invocation attempts, including failed executions.
+- `tool_calls_used`: Tracks successfully recorded tool executions.
+
+Before invoking an approved tool, the agentic workflow calls `record_tool_attempt()`.
+
+This function increments the attempt counter and records an audit event before execution begins.
+
+The workflow enforces the configured `max_tool_calls` limit against `tool_attempts`, ensuring that failed executions cannot bypass the configured attempt limit.
+
+The current investigation workflow permits a maximum of one tool attempt per investigation.
+
+These controls provide application-level execution safeguards. Additional protections would be necessary before supporting concurrent investigations, automated retries, or multi-step autonomous agent workflows.
 
 ### 7.5 Human Oversight
 
@@ -536,9 +655,10 @@ These changes improved the structure and testability of SentinelAI without intro
 | Day 6 | IAM detection and deterministic SOC investigation | Completed |
 | Day 7 | Local Qwen3 integration through Ollama | Completed |
 | Day 8 | Controlled AI tool selection and read-only execution | Completed |
-| Day 9 | Investigation state management, audit logging, and stopping conditions | Implemented and tested |
+| Day 9 | Investigation state management, audit logging, and stopping conditions | Completed and published |
+| Day 10 | Tool-attempt tracking, execution-limit enforcement, strict state transitions, and 36 passing tests | Implemented and tested |
 
-Day 8 was committed and published to GitHub. Day 9 changes have been validated locally but have not yet been committed or published.
+Days 1–9 have been committed and published to GitHub. Day 10 implementation and documentation updates have been validated locally and are being prepared for publication.
 
 ---
 
@@ -546,7 +666,7 @@ Day 8 was committed and published to GitHub. Day 9 changes have been validated l
 
 The next development phases can extend SentinelAI in several areas.
 
-**Investigation orchestration:** Introduce more explicit transition rules, multi-step investigation states, and controlled evidence correlation using a framework such as LangGraph.
+**Investigation orchestration:** Extend the existing state-transition validation to support controlled multi-step investigations, evidence correlation across multiple security events, and more advanced workflow orchestration. A framework such as LangGraph may be evaluated in a future development phase. The current implementation supports one approved tool attempt per investigation.
 
 **Auditability:** Add persistent, structured investigation logs with stronger evidence provenance and safeguards against modification.
 

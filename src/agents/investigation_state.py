@@ -21,6 +21,7 @@ def create_investigation_state(alert: dict) -> dict:
         "audit_log": [],
         "max_tool_calls": 1,
         "tool_calls_used": 0,
+        "tool_attempts": 0,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "completed_at": None,
     }
@@ -45,6 +46,19 @@ def update_investigation_state(
         "failed",
     }
 
+
+    valid_transitions = {
+        "initialized": {"selecting_tool", "failed"},
+        "selecting_tool": {
+            "executing_tool",
+            "completed",
+            "failed",
+        },
+        "executing_tool": {"completed", "failed"},
+        "completed": set(),
+        "failed": set(),
+    }
+
     if new_status not in allowed_statuses:
         raise ValueError(
             f"Invalid investigation status: {new_status}"
@@ -53,6 +67,14 @@ def update_investigation_state(
     if state["status"] in {"completed", "failed"}:
         raise ValueError(
             "Cannot update a finished investigation."
+        )
+
+    current_status = state["status"]
+
+    if new_status not in valid_transitions[current_status]:
+        raise ValueError(
+            "Invalid investigation state transition: "
+            f"{current_status} -> {new_status}"
         )
 
     previous_status = state["status"]
@@ -73,7 +95,6 @@ def update_investigation_state(
         state["completed_at"] = audit_entry["timestamp"]
 
     return state
-
 
 def record_tool_execution(
     state: dict,
@@ -132,6 +153,43 @@ def record_tool_execution(
         "event": "tool_execution",
         "tool_name": execution["tool_name"],
         "status": execution["status"],
+    })
+
+    return state
+
+
+def record_tool_attempt(state: dict, tool_name: str) -> dict:
+    """
+    Record a tool invocation attempt before execution.
+
+    Count attempts even if the tool subsequently fails.
+    """
+
+    if state["status"] != "executing_tool":
+        raise ValueError(
+            "Tool attempts can only be recorded "
+            "during the executing_tool state."
+        )
+
+    if state["tool_attempts"] >= state["max_tool_calls"]:
+        raise RuntimeError(
+            "Investigation tool attempt limit reached."
+        )
+
+    if not isinstance(tool_name, str) or not tool_name.strip():
+        raise ValueError(
+            "Tool name must be a non-empty string."
+        )
+
+    timestamp = datetime.now(timezone.utc).isoformat()
+
+    state["tool_attempts"] += 1
+
+    state["audit_log"].append({
+        "timestamp": timestamp,
+        "event": "tool_attempt",
+        "tool_name": tool_name,
+        "attempt_number": state["tool_attempts"],
     })
 
     return state

@@ -139,7 +139,10 @@ def test_agentic_workflow_records_complete_audit_trail():
     assert len(state["tool_executions"]) == 1
     assert state["completed_at"] is not None
 
-    assert len(state["audit_log"]) == 4
+    # assert len(state["audit_log"]) == 4
+    assert len(state["audit_log"]) == 5
+    assert state["tool_attempts"] == 1
+    assert state["audit_log"][2]["event"] == "tool_attempt"
 
     assert [
         entry.get("new_status")
@@ -151,7 +154,7 @@ def test_agentic_workflow_records_complete_audit_trail():
         "completed",
     ]
 
-    assert state["audit_log"][2]["event"] == "tool_execution"
+    assert state["audit_log"][3]["event"] == "tool_execution"
 
     mock_executor.assert_called_once_with(
         tool_name="lookup_login_activity",
@@ -207,6 +210,19 @@ def test_agentic_workflow_handles_tool_execution_failure():
     assert state["audit_log"][-1]["new_status"] == "failed"
 
     mock_executor.assert_called_once()
+
+
+    state = result["investigation_state"]
+
+    assert state["tool_attempts"] == 1
+    assert state["tool_calls_used"] == 0
+
+    assert any(
+        entry.get("event") == "tool_attempt"
+        for entry in state["audit_log"]
+    )
+
+    assert state["status"] == "failed"
 
 
 def test_no_tool_selection_completes_without_execution():
