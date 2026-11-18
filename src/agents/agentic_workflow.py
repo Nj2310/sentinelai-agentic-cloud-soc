@@ -30,6 +30,9 @@
 
 from src.agents.tool_selector import select_investigation_tool
 from src.agents.tool_executor import execute_tool
+from pathlib import Path
+from src.agents.audit_storage import save_audit_log
+
 from src.agents.investigation_state import (
     create_investigation_state,
     update_investigation_state,
@@ -38,7 +41,10 @@ from src.agents.investigation_state import (
 )
 
 
-def run_agentic_investigation(alert: dict) -> dict:
+def run_agentic_investigation(
+        alert: dict,
+        audit_file_path: str | Path | None = None,
+        ) -> dict:
     """Run a controlled, auditable, read-only AI investigation."""
 
     state = create_investigation_state(alert)
@@ -129,3 +135,19 @@ def run_agentic_investigation(alert: dict) -> dict:
             "error": str(error),
             "investigation_state": state,
         }
+    # finally:
+    #     if audit_file_path is not None:
+    #         save_audit_log(state, audit_file_path)
+    finally:
+        if audit_file_path is not None:
+            try:
+                save_audit_log(state, audit_file_path)
+                state["audit_persistence"] = {
+                    "status": "success",
+                    "error_type": None,
+                }
+            except OSError as error:
+                state["audit_persistence"] = {
+                    "status": "failed",
+                    "error_type": type(error).__name__,
+                }

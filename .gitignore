@@ -18,6 +18,9 @@ alerts/*.json
 # Generated SOC reports
 reports/*.txt
 
+# Generated investigation audit logs
+*.jsonl
+
 # Local authentication datasets
 data/*.csv
 

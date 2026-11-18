@@ -732,6 +732,31 @@ Days 1–10 have been implemented, tested, and published to GitHub. Day 10 stren
 
 ---
 
+### Day 11 — Persistent Investigation Audit Logging
+
+Day 11 extends SentinelAI's investigation state management with persistent JSONL audit storage.
+
+**Implemented capabilities:**
+- Persistent investigation audit records in JSON Lines (JSONL) format.
+- Unique investigation identifiers and sequential event indices.
+- Duplicate prevention when saving an investigation repeatedly.
+- Incremental saving of newly recorded audit events.
+- Audit persistence across successful, failed, and no-tool investigation paths.
+- Explicit reporting of successful audit saves and `OSError` storage failures.
+- Preservation of investigation results when disk-related persistence errors occur.
+
+**Implementation files:**
+- `src/agents/audit_storage.py`
+- `src/agents/agentic_workflow.py`
+- `tests/test_audit_storage.py`
+- `tests/test_agentic_workflow.py`
+
+**Validation:** 44 automated tests passed with zero failures.
+
+**Current limitations:** Audit files are stored locally. The prototype does not yet provide tamper-evident records, concurrent-write protection, guaranteed durability, or comprehensive handling of corrupted audit files and serialization errors.
+
+---
+
 ## 10. Future Improvements
 
 The next development phases can extend SentinelAI in several areas.

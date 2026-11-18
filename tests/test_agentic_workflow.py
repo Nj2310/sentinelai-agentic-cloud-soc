@@ -1,3 +1,4 @@
+from unittest import result
 from unittest.mock import patch
 
 from src.agents.agentic_workflow import run_agentic_investigation
@@ -270,3 +271,215 @@ def test_no_tool_selection_completes_without_execution():
     ]
 
     mock_executor.assert_not_called()
+
+import json
+
+
+def test_agentic_workflow_persists_audit_log(tmp_path):
+    """Verify a completed investigation saves audit events."""
+
+    alert = {
+        "alert_type": "BRUTE_FORCE",
+        "source_ip": "198.51.100.50",
+        "severity": "high",
+    }
+
+    selection = {
+        "tool_name": None,
+        "parameters": {},
+    }
+
+    audit_file = tmp_path / "investigations.jsonl"
+
+    with patch(
+        "src.agents.agentic_workflow.select_investigation_tool",
+        return_value=selection,
+    ):
+        result = run_agentic_investigation(
+            alert,
+            audit_file_path=audit_file,
+        )
+
+    assert result["status"] == "no_tool_selected"
+    assert audit_file.exists()
+
+    records = [
+        json.loads(line)
+        for line in audit_file.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+
+    state = result["investigation_state"]
+
+    assert len(records) == len(state["audit_log"])
+    assert len(records) == 2
+
+    assert all(
+        record["investigation_id"] == state["investigation_id"]
+        for record in records
+    )
+
+    assert records[-1]["new_status"] == "completed"
+
+def test_agentic_workflow_reports_audit_storage_failure(tmp_path):
+    """Preserve the investigation result if audit persistence fails."""
+
+    alert = {
+        "alert_type": "BRUTE_FORCE",
+        "source_ip": "198.51.100.50",
+        "severity": "high",
+    }
+
+    selection = {
+        "tool_name": None,
+        "parameters": {},
+    }
+
+    audit_file = tmp_path / "investigations.jsonl"
+
+    with patch(
+        "src.agents.agentic_workflow.select_investigation_tool",
+        return_value=selection,
+    ), patch(
+        "src.agents.agentic_workflow.save_audit_log",
+        side_effect=OSError("Simulated disk write failure"),
+    ):
+        result = run_agentic_investigation(
+            alert,
+            audit_file_path=audit_file,
+        )
+
+    assert result["status"] == "no_tool_selected"
+    assert result["investigation_state"]["status"] == "completed"
+
+    # Persistence failure must be explicitly reported.
+    # assert result["audit_persistence"]["status"] == "failed"
+    # assert result["audit_persistence"]["error_type"] == "OSError"
+    assert result["investigation_state"]["audit_persistence"]["status"] == "failed"
+    assert result["investigation_state"]["audit_persistence"]["error_type"] == "OSError"
+
+def test_agentic_workflow_reports_audit_storage_success(tmp_path):
+    alert = {
+        "alert_type": "BRUTE_FORCE",
+        "source_ip": "198.51.100.50",
+        "severity": "high",
+    }
+
+    selection = {
+        "tool_name": None,
+        "parameters": {},
+    }
+
+    audit_file = tmp_path / "investigations.jsonl"
+
+    with patch(
+        "src.agents.agentic_workflow.select_investigation_tool",
+        return_value=selection,
+    ):
+        result = run_agentic_investigation(
+            alert,
+            audit_file_path=audit_file,
+        )
+
+    state = result["investigation_state"]
+
+    assert result["status"] == "no_tool_selected"
+    assert state["audit_persistence"]["status"] == "success"
+    assert state["audit_persistence"]["error_type"] is None
+    assert audit_file.exists()
+
+def test_failed_investigation_persists_audit_log(tmp_path):
+    alert = {
+        "alert_type": "BRUTE_FORCE",
+        "source_ip": "198.51.100.50",
+        "severity": "high",
+    }
+
+    audit_file = tmp_path / "failed_investigations.jsonl"
+
+    with patch(
+        "src.agents.agentic_workflow.select_investigation_tool",
+        side_effect=RuntimeError("Simulated selection failure"),
+    ):
+        result = run_agentic_investigation(
+            alert,
+            audit_file_path=audit_file,
+        )
+
+    state = result["investigation_state"]
+
+    assert result["status"] == "failed"
+    assert state["status"] == "failed"
+    assert state["audit_persistence"]["status"] == "success"
+    assert audit_file.exists()
+
+    records = [
+        json.loads(line)
+        for line in audit_file.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+
+    assert len(records) == len(state["audit_log"])
+    assert any(
+        record.get("event") == "investigation_error"
+        for record in records
+    )
+    assert records[-1]["new_status"] == "failed"
+
+def test_successful_tool_investigation_persists_audit_log(tmp_path):
+    alert = {
+        "alert_type": "BRUTE_FORCE",
+        "source_ip": "198.51.100.50",
+        "severity": "high",
+    }
+
+    selection = {
+        "tool_name": "lookup_ip",
+        "parameters": {"ip_address": "198.51.100.50"},
+    }
+
+    execution = {
+        "tool_name": "lookup_ip",
+        "parameters": {"ip_address": "198.51.100.50"},
+        "status": "success",
+        "result": {"found": True},
+    }
+
+    audit_file = tmp_path / "successful_investigations.jsonl"
+
+    with patch(
+        "src.agents.agentic_workflow.select_investigation_tool",
+        return_value=selection,
+    ), patch(
+        "src.agents.agentic_workflow.execute_tool",
+        return_value=execution,
+    ):
+        result = run_agentic_investigation(
+            alert,
+            audit_file_path=audit_file,
+        )
+
+    state = result["investigation_state"]
+
+    assert result["status"] == "completed"
+    assert state["status"] == "completed"
+    assert state["audit_persistence"]["status"] == "success"
+    assert audit_file.exists()
+
+    records = [
+        json.loads(line)
+        for line in audit_file.read_text(
+            encoding="utf-8"
+        ).splitlines()
+    ]
+
+    assert len(records) == len(state["audit_log"])
+
+    assert any(
+        record.get("event") == "tool_execution"
+        for record in records
+    )
+
+    assert records[-1]["new_status"] == "completed"
