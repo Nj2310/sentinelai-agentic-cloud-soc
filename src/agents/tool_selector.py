@@ -79,7 +79,30 @@ def select_investigation_tool(alert: dict) -> dict:
     tool_name = selection["tool_name"]
     parameters = selection["parameters"]
 
+    # if tool_name is None and parameters == {}:
+    #     return selection
     if tool_name is None and parameters == {}:
+        if (
+            alert.get("alert_type") == "BRUTE_FORCE"
+            and str(alert.get("severity", "")).lower() == "high"
+        ):
+            original_ip = alert.get("source_ip")
+
+            if not isinstance(original_ip, str) or not original_ip.strip():
+                raise ValueError("Alert is missing a valid source IP")
+
+            try:
+                validated_ip = ipaddress.ip_address(original_ip)
+            except ValueError:
+                raise ValueError("Alert contains an invalid source IP")
+
+            return {
+                "tool_name": "lookup_login_activity",
+                "parameters": {
+                    "source_ip": str(validated_ip)
+                },
+            }
+
         return selection
 
     if not isinstance(tool_name, str):
