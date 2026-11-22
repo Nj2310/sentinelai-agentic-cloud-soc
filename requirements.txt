@@ -1,0 +1,11 @@
+# SentinelAI - Python Dependencies
+# Tested with Python 3.13
+
+# Local LLM integration
+ollama==0.6.3
+
+# Model Context Protocol
+mcp==1.30.0
+
+# Automated testing
+pytest==9.2.0
