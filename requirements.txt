@@ -1,8 +1,12 @@
+
 # SentinelAI - Python Dependencies
 # Tested with Python 3.13
 
-# Local LLM integration
+# Local LLM integration (default: Qwen3)
 ollama==0.6.3
+
+# Optional cloud LLM integration (Anthropic Claude)
+anthropic==2.12.0
 
 # Model Context Protocol
 mcp==1.30.0

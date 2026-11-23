@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 from src.agents.llm_client import generate_security_analysis
@@ -10,21 +11,37 @@ def test_generate_security_analysis():
         "failed_attempts": 5,
     }
 
-    class MockMessage:
-        content = "Possible brute-force activity. Analyst review recommended."
+    expected_response = (
+        "Possible brute-force activity. "
+        "Analyst review recommended."
+    )
 
-    class MockResponse:
-        message = MockMessage()
+    with patch(
+        "src.agents.llm_client.get_llm_provider"
+    ) as mock_factory:
 
-    with patch("src.agents.llm_client.chat", return_value=MockResponse()) as mock_chat:
+        mock_provider = mock_factory.return_value
+        mock_provider.generate.return_value = expected_response
+
         result = generate_security_analysis(evidence)
 
-    assert "Possible brute-force activity" in result
-    assert "Analyst review recommended" in result
+        assert result == expected_response
 
-    mock_chat.assert_called_once()
+        mock_factory.assert_called_once()
+        mock_provider.generate.assert_called_once()
 
-    call_kwargs = mock_chat.call_args.kwargs
-    assert call_kwargs["model"] == "qwen3:4b"
-    assert call_kwargs["think"] is False
-    assert "198.51.100.50" in call_kwargs["messages"][1]["content"]
+        call_kwargs = mock_provider.generate.call_args.kwargs
+
+        system_prompt = call_kwargs["system_prompt"]
+        user_prompt = call_kwargs["user_prompt"]
+
+        # Verify the security instructions are preserved.
+        assert "cybersecurity SOC investigation assistant" in system_prompt
+        assert "Do not invent events" in system_prompt
+        assert "analyst review" in system_prompt
+
+        # Verify the original evidence reaches the provider.
+        assert json.dumps(evidence, indent=2) in user_prompt
+
+        # Verify the provider receives the correct prompt structure.
+        assert "Analyze this synthetic security evidence" in user_prompt

@@ -1,6 +1,6 @@
 # SentinelAI — Agentic AI Cloud Security Operations Platform
 
-**A local-first cybersecurity research prototype for AI-assisted cloud security investigations, secure Model Context Protocol (MCP) tool integration, controlled execution, auditability, and adversarial security evaluation.**
+**A local-first cybersecurity research prototype for AI-assisted cloud security investigations, secure Model Context Protocol (MCP) tool integration, controlled agent execution, auditability, adversarial security evaluation, and multi-provider LLM integration.**
 
 **GitHub Repository:** https://github.com/Nj2310/sentinelai-agentic-cloud-soc
 
@@ -8,21 +8,55 @@
 
 ## Project Status
 
-**Development through Day 13 (MCP integration implemented and locally validated)** | **49 automated tests passing** | **Local Qwen3 4B via Ollama** | **MCP Python SDK 1.30.0**
+**Development through Day 14 — Multi-Provider LLM Abstraction Implemented and Unit-Tested**
+
+- **61 automated tests passing**
+- **Python 3.13**
+- **Local Qwen3 4B via Ollama**
+- **Optional Anthropic Claude integration**
+- **MCP Python SDK 1.30.0**
+- **Anthropic Python SDK 2.12.0**
+- **Application-enforced investigation security controls**
 
 SentinelAI processes synthetic authentication, AWS CloudTrail, and IAM security events; generates security alerts; and supports deterministic and AI-assisted investigation workflows.
 
-The platform combines local large language model (LLM) reasoning with application-enforced security controls, including approved tool registries, source-IP validation, execution limits, investigation state tracking, and persistent audit logging.
+The platform combines language-model reasoning with application-enforced security controls, including approved tool registries, source-IP validation, execution limits, investigation state tracking, and persistent audit logging.
 
-Day 12 introduced prompt-injection evaluation and a deterministic investigation guardrail.
+### Recent Development Milestones
 
-Day 13 introduces a local MCP server that exposes an approved read-only CloudTrail investigation tool through a standardized client-server protocol.
+**Day 12 — Prompt-Injection Defense**
 
-The MCP integration has been tested through direct Python calls, FastMCP dispatch, and a separate MCP client communicating with the server over stdio.
+Introduced adversarial prompt-injection evaluation and a deterministic investigation guardrail.
 
-**Current verification:** 49 automated tests passing, with additional successful standalone MCP protocol integration checks.
+**Day 13 — Secure MCP Integration**
 
-**Scope:** SentinelAI is a cybersecurity portfolio and research prototype, not a production SOC platform. All demonstrated security events are synthetic. It does not perform autonomous remediation or operate against live AWS infrastructure.
+Implemented a local MCP server exposing an approved read-only CloudTrail investigation tool.
+
+The MCP implementation was validated through Python tests, FastMCP dispatch, and standalone client-server communication over stdio.
+
+**Day 14 — Multi-Provider LLM Architecture**
+
+Introduced a common provider interface supporting:
+
+- Ollama with Qwen3 4B as the default local model.
+- Optional Anthropic Claude integration.
+- Environment-variable-based provider selection.
+- Provider-specific implementations.
+- A centralized provider factory.
+- Mocked provider unit tests.
+- Updated security-analysis client integration.
+
+**Latest verified result:**
+
+```text
+61 passed in 6.66s
+```
+
+**Scope:** SentinelAI is a cybersecurity portfolio and research prototype, not a production SOC platform.
+
+All demonstrated security events are synthetic.
+
+The project does not perform autonomous remediation or operate against live AWS infrastructure.
 
 ---
 
@@ -30,13 +64,13 @@ The MCP integration has been tested through direct Python calls, FastMCP dispatc
 
 Cloud security analysts must interpret large volumes of authentication and identity events, identify suspicious behavior, and gather supporting evidence.
 
-AI-assisted investigation can help accelerate analysis, but language models can be manipulated by attacker-controlled content or produce unsafe tool recommendations.
+AI-assisted investigation can help accelerate analysis, but language models may produce inaccurate findings, follow malicious instructions embedded in untrusted data, or recommend unsafe tool actions.
 
 SentinelAI explores how to combine AI reasoning with deterministic security controls.
 
-The project follows six engineering principles:
+### Engineering Principles
 
-1. **Local-first experimentation:** Use synthetic security events and locally hosted AI models without requiring production cloud infrastructure or paid AI APIs.
+1. **Local-first experimentation:** Use synthetic security events and locally hosted models without requiring production cloud infrastructure or paid AI APIs.
 
 2. **Deterministic security enforcement:** Keep authorization, parameter validation, and mandatory investigation policies in application code rather than relying exclusively on model behavior.
 
@@ -48,6 +82,10 @@ The project follows six engineering principles:
 
 6. **Secure tool interoperability:** Use MCP to expose approved investigation functionality while enforcing validation and authorization at the tool boundary.
 
+7. **Provider abstraction:** Separate security-analysis logic from model-specific SDK implementations.
+
+8. **Human oversight:** Require analyst review rather than automatically performing cloud remediation.
+
 ---
 
 ## 2. Technology Stack
@@ -57,9 +95,12 @@ The project follows six engineering principles:
 | Programming language | Python 3.13 |
 | Development environment | Windows, VS Code, PowerShell |
 | Environment management | Python virtual environment |
-| Local model runtime | Ollama |
-| Language model | Qwen3 4B (`qwen3:4b`) |
-| AI integration | Ollama Python SDK 0.6.3 |
+| Default LLM runtime | Ollama |
+| Default language model | Qwen3 4B (`qwen3:4b`) |
+| Ollama SDK | `ollama==0.6.3` |
+| Optional cloud LLM provider | Anthropic Claude |
+| Anthropic SDK | `anthropic==2.12.0` |
+| LLM abstraction | Python abstract base class and provider factory |
 | Tool interoperability | Model Context Protocol (MCP) |
 | MCP implementation | Official Python MCP SDK 1.30.0 |
 | MCP server framework | FastMCP |
@@ -71,7 +112,9 @@ The project follows six engineering principles:
 | Dependency management | `requirements.txt` |
 | Version control | Git and GitHub |
 
-The current implementation does not require live AWS credentials, an external SIEM, or a production model endpoint.
+The default configuration does not require live AWS credentials, an external SIEM, or a paid model API.
+
+Claude is an optional provider and requires a valid Anthropic API key for live requests.
 
 ---
 
@@ -83,43 +126,43 @@ The current implementation does not require live AWS credentials, an external SI
 Synthetic Authentication / CloudTrail / IAM Events
                          |
                          v
-                 Event Parsers
+                   Event Parsers
                          |
                          v
-                Detection Engine
+                  Detection Engine
                          |
                          v
-               Structured Security Alert
+                Structured Security Alert
                          |
                          v
               Investigation Orchestrator
                     /           \
                    v             v
-          Deterministic       Qwen3 4B
-          Investigation       via Ollama
+           Deterministic      AI-Based
+           Investigation      Tool Selection
                                   |
                                   v
-                         Proposed Tool Action
+                          Proposed Tool Action
                                   |
                                   v
-                       Application Guardrails
-                       - Approved tool registry
-                       - Parameter validation
-                       - Original source IP
-                       - Mandatory investigation
+                        Application Guardrails
+                        - Approved tool registry
+                        - Parameter validation
+                        - Original source IP
+                        - Mandatory investigation
                                   |
                                   v
-                       Controlled Tool Executor
+                        Controlled Tool Executor
                                   |
                                   v
-                       Investigation Results
+                        Investigation Results
                                   |
-                        +---------+---------+
-                        |                   |
-                        v                   v
-                  State Tracking       Audit Events
-                                            |
-                                            v
+                         +--------+--------+
+                         |                 |
+                         v                 v
+                    State Tracking     Audit Events
+                                           |
+                                           v
                                       Optional JSONL
                                        Persistence
 ```
@@ -128,50 +171,102 @@ The AI model proposes tool actions, but Python application code determines wheth
 
 The current agentic workflow permits a maximum of **one approved tool attempt per investigation**.
 
-### 3.2 MCP Tool Integration — Day 13
+The tool-selection workflow currently retains its existing Ollama-based implementation. Day 14's provider abstraction has been integrated into the security-analysis client, not necessarily every model invocation in the agentic workflow.
+
+### 3.2 Multi-Provider LLM Architecture — Day 14
 
 ```text
-              MCP Client
-                  |
-                  |
-           MCP stdio Protocol
-                  |
-                  v
-       SentinelAI FastMCP Server
-       src/agents/mcp_server.py
-                  |
-                  v
-         Tool Authorization Check
-         - Approved registry entry
-         - Read-only policy flag
-                  |
-                  v
-          Source IP Validation
-          Python ipaddress module
-                  |
-                  v
-        lookup_login_activity()
-                  |
-                  v
-       Synthetic CloudTrail Parser
-                  |
-                  v
-        Matching Login Events
-                  |
-                  v
-         MCP Tool Response
-                  |
-                  v
-              MCP Client
+              Structured Security Evidence
+                           |
+                           v
+                 src/agents/llm_client.py
+                           |
+                           v
+                    Provider Factory
+                    get_llm_provider()
+                           |
+                  Environment Variable
+                SENTINELAI_LLM_PROVIDER
+                           |
+                  +--------+--------+
+                  |                 |
+                  v                 v
+           OllamaProvider      ClaudeProvider
+                  |                 |
+                  v                 v
+             Ollama SDK        Anthropic SDK
+                  |                 |
+                  v                 v
+              Qwen3 4B         Claude Model
+                  |                 |
+                  +--------+--------+
+                           |
+                           v
+                  Generated SOC Analysis
+```
+
+The common provider interface defines:
+
+```python
+generate(system_prompt: str, user_prompt: str) -> str
+```
+
+This allows the security-analysis client to request model output without directly depending on a particular model SDK.
+
+The provider factory selects the configured implementation.
+
+**Default provider:** Ollama.
+
+**Optional provider:** Claude.
+
+Provider selection changes the model used for security-analysis generation. It does not bypass the application's investigation-tool security policies.
+
+### 3.3 MCP Tool Integration — Day 13
+
+```text
+                   MCP Client
+                       |
+                       v
+                MCP stdio Protocol
+                       |
+                       v
+              SentinelAI FastMCP Server
+              src/agents/mcp_server.py
+                       |
+                       v
+              Tool Authorization Check
+              - Approved registry entry
+              - Read-only policy flag
+                       |
+                       v
+                Source IP Validation
+                Python ipaddress module
+                       |
+                       v
+              lookup_login_activity()
+                       |
+                       v
+              Synthetic CloudTrail Parser
+                       |
+                       v
+                Matching Login Events
+                       |
+                       v
+                 MCP Tool Response
+                       |
+                       v
+                    MCP Client
 ```
 
 The MCP server currently exposes one investigation tool:
 
-`lookup_login_activity_mcp`
+```text
+lookup_login_activity_mcp
+```
 
-The tool reuses the existing `lookup_login_activity()` implementation instead of duplicating CloudTrail investigation logic.
+This tool reuses the existing `lookup_login_activity()` implementation instead of duplicating CloudTrail investigation logic.
 
-**Architecture distinction:** The MCP server is a separately validated tool interface. The existing Qwen3 investigation workflow has not yet been rewired to execute its selected tools through an MCP client.
+**Architecture distinction:** The MCP server is a separately validated tool interface. The existing AI investigation workflow has not yet been rewired to execute selected tools through an MCP client.
 
 ---
 
@@ -179,20 +274,22 @@ The tool reuses the existing `lookup_login_activity()` implementation instead of
 
 ### 4.1 Detection Engineering and Synthetic Cloud Events (Days 1–6)
 
-- Ingest synthetic authentication events.
-- Detect suspicious brute-force login patterns.
-- Evaluate detection behavior using synthetic test cases.
-- Parse synthetic AWS CloudTrail `ConsoleLogin` events.
-- Normalize authentication event information.
-- Parse IAM activity, including simulated `CreateAccessKey` events.
-- Support deterministic security investigations.
-- Validate detection behavior through automated tests.
+Implemented capabilities include:
 
-These capabilities demonstrate a controlled detection pipeline, not production detection accuracy.
+- Ingestion of synthetic authentication events.
+- Detection of suspicious brute-force login patterns.
+- Evaluation using synthetic test cases.
+- Parsing of synthetic AWS CloudTrail `ConsoleLogin` events.
+- Normalization of authentication information.
+- Parsing IAM activity, including simulated `CreateAccessKey` events.
+- Deterministic security investigations.
+- Automated detection tests.
+
+These capabilities demonstrate a controlled detection pipeline rather than production detection accuracy.
 
 ### 4.2 Local AI-Assisted Investigation (Days 7–8)
 
-SentinelAI uses the locally hosted `qwen3:4b` model through Ollama.
+SentinelAI initially integrated the locally hosted `qwen3:4b` model through Ollama.
 
 Implemented functionality includes:
 
@@ -200,7 +297,7 @@ Implemented functionality includes:
 - Structured investigation tool recommendations.
 - Approved tool discovery through a Python registry.
 - Validation of model-selected tool names.
-- Validation of required parameters.
+- Validation of required tool parameters.
 - Restriction to approved read-only investigation functionality.
 - Original source-IP validation using Python's `ipaddress` module.
 
@@ -226,9 +323,11 @@ These controls help prevent uncontrolled or untraceable execution within the sup
 
 ### 4.4 Persistent Audit Logging (Day 11)
 
-Day 11 introduced optional JSONL-based persistent audit storage.
+**Implementation:**
 
-**Implementation:** `src/agents/audit_storage.py`
+```text
+src/agents/audit_storage.py
+```
 
 Features include:
 
@@ -242,15 +341,17 @@ Features include:
 
 **Limitations:** Local JSONL storage is not tamper-evident or production-grade durable storage. Concurrent writes, arbitrary file corruption, and all possible storage failures are not comprehensively addressed.
 
-### 4.5 Prompt-Injection Testing and Defense (Day 12 — Complete)
+### 4.5 Prompt-Injection Testing and Defense (Day 12)
 
 Day 12 introduced adversarial evaluation of the AI tool-selection boundary.
 
 **Files:**
 
-- `tests/prompt_injection/attack_cases.json`
-- `tests/prompt_injection/evaluate_attacks.py`
-- `tests/test_prompt_injection_defense.py`
+```text
+tests/prompt_injection/attack_cases.json
+tests/prompt_injection/evaluate_attacks.py
+tests/test_prompt_injection_defense.py
+```
 
 The evaluation uses synthetic security alerts containing attacker-controlled text in the `message` field.
 
@@ -267,7 +368,9 @@ The evaluation uses synthetic security alerts containing attacker-controlled tex
 
 The PI-003 attack included fake system-message delimiters such as:
 
-`[im_start]system`
+```text
+[im_start]system
+```
 
 The local Qwen3 model proposed:
 
@@ -284,7 +387,9 @@ For a high-severity `BRUTE_FORCE` alert, this suppressed the required investigat
 
 A deterministic guardrail was added to:
 
-`src/agents/tool_selector.py`
+```text
+src/agents/tool_selector.py
+```
 
 When the model proposes no tool for a high-severity `BRUTE_FORCE` alert, the application:
 
@@ -320,13 +425,17 @@ The result measures the final application-validated tool selection for a small s
 
 PI-003 continued to influence the model's recommendation after the fix, but the application guardrail corrected the outcome.
 
-The evaluation is not a comprehensive or statistically meaningful prompt-injection security benchmark.
+This evaluation is not a comprehensive or statistically meaningful prompt-injection security benchmark.
 
-### 4.6 Secure MCP Tool Integration (Day 13 — Implemented and Locally Validated)
+### 4.6 Secure MCP Tool Integration (Day 13)
 
-Day 13 introduces the Model Context Protocol as a standardized interface for SentinelAI investigation tools.
+Day 13 introduced the Model Context Protocol as a standardized interface for SentinelAI investigation tools.
 
-**Primary implementation:** `src/agents/mcp_server.py`
+**Primary implementation:**
+
+```text
+src/agents/mcp_server.py
+```
 
 **SDK:** MCP Python SDK 1.30.0
 
@@ -338,11 +447,15 @@ Day 13 introduces the Model Context Protocol as a standardized interface for Sen
 
 The server is named:
 
-`SentinelAI Security Investigation Server`
+```text
+SentinelAI Security Investigation Server
+```
 
 It currently registers exactly one tool:
 
-`lookup_login_activity_mcp`
+```text
+lookup_login_activity_mcp
+```
 
 This tool performs read-only investigation of synthetic CloudTrail login events associated with a validated source IP.
 
@@ -399,7 +512,9 @@ The local synthetic dataset contains six CloudTrail authentication records.
 
 An MCP investigation for:
 
-`198.51.100.50`
+```text
+198.51.100.50
+```
 
 returned:
 
@@ -441,7 +556,7 @@ The standalone integration script:
 6. Invokes the CloudTrail investigation tool.
 7. Validates the returned investigation data.
 
-**Verified output:**
+**Previously verified output:**
 
 ```text
 PASS: MCP server exposes exactly one approved tool
@@ -449,7 +564,7 @@ PASS: MCP stdio investigation completed
 Matching events: 5
 ```
 
-The standalone script is executed separately and is not currently counted among the 49 pytest tests.
+The standalone script is executed separately and is not included in the 61 pytest tests.
 
 #### Current MCP Limitations
 
@@ -462,6 +577,199 @@ The standalone script is executed separately and is not currently counted among 
 
 The MCP integration demonstrates a functioning local client-server tool interface with application-level security checks. It is not a production-hardened MCP service.
 
+### 4.7 Multi-Provider LLM Integration (Day 14)
+
+Day 14 introduced a modular LLM provider architecture for SentinelAI.
+
+The goal is to support multiple language models without requiring the security-analysis client to depend directly on a particular model SDK.
+
+#### Provider Interface
+
+**File:**
+
+```text
+src/agents/providers/base.py
+```
+
+The abstract base class defines a common interface:
+
+```python
+from abc import ABC, abstractmethod
+
+
+class LLMProvider(ABC):
+    """Common interface for SentinelAI language model providers."""
+
+    @abstractmethod
+    def generate(self, system_prompt: str, user_prompt: str) -> str:
+        """Generate a response from configured model."""
+        pass
+```
+
+Every provider must implement the `generate()` method.
+
+#### Ollama Provider
+
+**File:**
+
+```text
+src/agents/providers/ollama_provider.py
+```
+
+The Ollama provider:
+
+- Uses the existing Ollama Python SDK.
+- Defaults to the local `qwen3:4b` model.
+- Accepts system and user prompts.
+- Uses deterministic generation settings with temperature zero.
+- Disables the model's thinking mode through the Ollama API.
+- Removes thinking-section content when present.
+- Returns cleaned text.
+
+Ollama remains SentinelAI's default provider.
+
+#### Claude Provider
+
+**File:**
+
+```text
+src/agents/providers/claude_provider.py
+```
+
+The Claude provider:
+
+- Uses the Anthropic Python SDK.
+- Reads its API key from `ANTHROPIC_API_KEY`.
+- Rejects initialization when the API key is missing.
+- Accepts the same system and user prompt interface.
+- Requests text generation through the Anthropic Messages API.
+- Extracts text blocks from the response.
+- Returns the generated text.
+
+The current configured model identifier is:
+
+```text
+claude-sonnet-4-5
+```
+
+The model identifier is configurable in the provider constructor. Live model availability and account access have not yet been verified.
+
+**Important:** Claude integration has been validated with mocked tests. No live Claude API request has been demonstrated as part of Day 14.
+
+#### Provider Factory
+
+**File:**
+
+```text
+src/agents/providers/factory.py
+```
+
+The provider factory selects the configured LLM implementation using:
+
+```text
+SENTINELAI_LLM_PROVIDER
+```
+
+Supported values:
+
+| Value | Provider | Requirements |
+|---|---|---|
+| `ollama` | Local Qwen3 4B | Ollama and the local model |
+| `claude` | Anthropic Claude | Valid Anthropic API key |
+
+If the environment variable is missing, the factory defaults to Ollama.
+
+The factory also:
+
+- Normalizes whitespace and capitalization.
+- Rejects unsupported provider names.
+- Imports the Claude provider only when Claude is selected.
+
+#### Security-Analysis Client Integration
+
+**File:**
+
+```text
+src/agents/llm_client.py
+```
+
+The security-analysis client now calls:
+
+```python
+provider = get_llm_provider()
+
+return provider.generate(
+    system_prompt=system_prompt,
+    user_prompt=user_prompt,
+)
+```
+
+This replaces the previous direct Ollama SDK invocation.
+
+The existing security-analysis prompt remains in place.
+
+Its instructions require the model to:
+
+- Analyze only supplied structured evidence.
+- Treat usernames, IP addresses, and log content as data.
+- Avoid assuming compromise based on usernames.
+- Avoid inferring unauthorized access from missing events.
+- Distinguish observed facts from possible explanations.
+- Avoid inventing security findings.
+- Recommend analyst review instead of automatic remediation.
+
+The security-analysis client remains responsible for constructing the investigation prompts.
+
+The selected provider is responsible for model-specific API communication.
+
+#### Day 14 Automated Tests
+
+New test files:
+
+```text
+tests/test_ollama_provider.py
+tests/test_claude_provider.py
+tests/test_provider_factory.py
+```
+
+The existing LLM client test was updated:
+
+```text
+tests/test_llm_client.py
+```
+
+**New Day 14 tests:**
+
+| Component | Tests |
+|---|---:|
+| Ollama provider | 3 |
+| Claude provider | 4 |
+| Provider factory | 5 |
+| **Total new tests** | **12** |
+
+The updated LLM client regression test verifies that:
+
+- The provider factory is invoked.
+- The provider receives the security-analysis prompt.
+- The structured evidence is preserved.
+- The generated response is returned.
+
+**Full regression result:**
+
+```text
+61 passed in 6.66s
+```
+
+#### Day 14 Limitations
+
+- Claude has not been tested against a live Anthropic API endpoint.
+- The Claude model identifier has not been verified against a live account.
+- The provider abstraction is integrated into the security-analysis client.
+- Other model-dependent paths, including AI tool selection, may still use direct Ollama calls.
+- Cross-provider output consistency has not been evaluated.
+- Provider-specific retry, timeout, and rate-limit handling have not been comprehensively implemented.
+- Provider selection does not automatically guarantee safe or accurate model output.
+
 ---
 
 ## 5. Selected Source Files
@@ -473,7 +781,12 @@ The MCP integration demonstrates a functioning local client-server tool interfac
 | `src/iam_parser.py` | IAM event parsing |
 | `src/iam_detector.py` | IAM security detection |
 | `src/agents/investigator.py` | Deterministic and AI-assisted investigation |
-| `src/agents/llm_client.py` | Local LLM analysis |
+| `src/agents/llm_client.py` | Provider-independent security-analysis client |
+| `src/agents/providers/__init__.py` | Provider package initialization |
+| `src/agents/providers/base.py` | Abstract LLM provider interface |
+| `src/agents/providers/ollama_provider.py` | Local Ollama provider implementation |
+| `src/agents/providers/claude_provider.py` | Optional Anthropic Claude implementation |
+| `src/agents/providers/factory.py` | Environment-based LLM provider selection |
 | `src/agents/investigation_tools.py` | Read-only investigation evidence lookup |
 | `src/agents/tool_registry.py` | Approved tool definitions |
 | `src/agents/tool_selector.py` | AI tool selection, validation, and mandatory investigation policy |
@@ -482,6 +795,10 @@ The MCP integration demonstrates a functioning local client-server tool interfac
 | `src/agents/investigation_state.py` | Investigation state transitions and audit events |
 | `src/agents/audit_storage.py` | Persistent JSONL audit storage |
 | `src/agents/mcp_server.py` | Secure local MCP server and approved investigation tool |
+| `tests/test_ollama_provider.py` | Ollama provider unit tests |
+| `tests/test_claude_provider.py` | Claude provider unit tests |
+| `tests/test_provider_factory.py` | Provider factory tests |
+| `tests/test_llm_client.py` | Security-analysis client regression test |
 | `tests/prompt_injection/attack_cases.json` | Synthetic adversarial evaluation cases |
 | `tests/prompt_injection/evaluate_attacks.py` | Prompt-injection evaluation runner |
 | `tests/test_prompt_injection_defense.py` | Mandatory investigation guardrail regression test |
@@ -501,6 +818,8 @@ The MCP integration demonstrates a functioning local client-server tool interfac
 - Qwen3 4B (`qwen3:4b`)
 - Python virtual environment
 - Project dependencies from `requirements.txt`
+
+A valid Anthropic API key is optional and only required for live Claude requests.
 
 ### Clone the Repository
 
@@ -524,17 +843,30 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-The current dependency manifest specifies:
+The dependency manifest specifies:
 
 ```text
 ollama==0.6.3
+anthropic==2.12.0
 mcp==1.30.0
 pytest==9.2.0
 ```
 
 Supporting dependencies are resolved by pip.
 
-The manifest has been successfully validated in the existing development environment. A separate clean-environment installation test has not yet been performed.
+The existing development environment passed:
+
+```powershell
+python -m pip check
+```
+
+Result:
+
+```text
+No broken requirements found.
+```
+
+A separate clean-environment installation test has not yet been performed.
 
 ### Verify Ollama
 
@@ -544,13 +876,53 @@ ollama list
 
 The expected local model identifier is:
 
-`qwen3:4b`
+```text
+qwen3:4b
+```
 
 If necessary, obtain the model using:
 
 ```powershell
 ollama pull qwen3:4b
 ```
+
+### Configure the LLM Provider
+
+SentinelAI defaults to Ollama.
+
+No additional provider configuration is required for local Qwen3 security analysis.
+
+To explicitly select Ollama in PowerShell:
+
+```powershell
+$env:SENTINELAI_LLM_PROVIDER = "ollama"
+```
+
+To select Claude:
+
+```powershell
+$env:SENTINELAI_LLM_PROVIDER = "claude"
+```
+
+Claude also requires an Anthropic API key:
+
+```powershell
+$env:ANTHROPIC_API_KEY = "YOUR_API_KEY"
+```
+
+Replace the placeholder with a valid API key.
+
+For better security, enter the key through a secure secret-management mechanism rather than storing it in source code or committing it to Git.
+
+**Never commit API keys, credentials, or other secrets to the repository.**
+
+To return to Ollama:
+
+```powershell
+$env:SENTINELAI_LLM_PROVIDER = "ollama"
+```
+
+These PowerShell environment-variable assignments apply to the current terminal session and processes launched from it.
 
 ### Run All Automated Tests
 
@@ -561,10 +933,56 @@ python -m pytest -q
 **Latest verified local result:**
 
 ```text
-49 passed in 1.34s
+61 passed in 6.66s
 ```
 
-The 49 tests include the original detection, investigation, tool-selection, state-management, audit, and prompt-injection regression tests, plus four new MCP security tests.
+The suite includes detection, investigation, tool-selection, state-management, audit, prompt-injection, MCP security, and LLM provider tests.
+
+### Run Ollama Provider Tests
+
+```powershell
+python -m pytest tests/test_ollama_provider.py -v
+```
+
+Previously verified:
+
+```text
+3 passed
+```
+
+### Run Claude Provider Tests
+
+```powershell
+python -m pytest tests/test_claude_provider.py -v
+```
+
+Previously verified:
+
+```text
+4 passed
+```
+
+These tests use mocks and do not require a live Claude API call.
+
+### Run Provider Factory Tests
+
+```powershell
+python -m pytest tests/test_provider_factory.py -v
+```
+
+Previously verified:
+
+```text
+5 passed
+```
+
+### Run Security-Analysis Client Tests
+
+```powershell
+python -m pytest tests/test_llm_client.py -v
+```
+
+This test uses a mocked provider and verifies the prompt and evidence passed to the provider interface.
 
 ### Run Prompt-Injection Regression Tests
 
@@ -578,7 +996,7 @@ python -m pytest tests/test_prompt_injection_defense.py -q
 python -m tests.prompt_injection.evaluate_attacks
 ```
 
-This evaluation invokes the configured local Qwen3 model and evaluates the synthetic prompt-injection cases.
+This evaluation invokes the existing local Qwen3 tool-selection workflow and evaluates the synthetic prompt-injection cases.
 
 It tests tool selection rather than executing cloud remediation actions.
 
@@ -588,10 +1006,10 @@ It tests tool selection rather than executing cloud remediation actions.
 python -m pytest tests/test_mcp_security.py -v
 ```
 
-**Latest verified result:**
+Previously verified:
 
 ```text
-4 passed in 0.80s
+4 passed
 ```
 
 ### Run MCP Client-Server Integration Test
@@ -600,7 +1018,7 @@ python -m pytest tests/test_mcp_security.py -v
 python tests/test_mcp_stdio.py
 ```
 
-**Latest verified result:**
+Previously verified:
 
 ```text
 PASS: MCP server exposes exactly one approved tool
@@ -640,6 +1058,11 @@ Use `Ctrl+C` to stop the process if started manually.
 | MCP authorization | Registry-based application authorization checks |
 | MCP transport | Local stdio client-server communication |
 | MCP read-only policy | Checked through registry metadata; not an OS-level permission |
+| LLM provider selection | Environment-variable-based selection for security analysis |
+| Default LLM | Local Qwen3 4B through Ollama |
+| Optional LLM | Anthropic Claude |
+| Claude verification | Mocked unit tests; no live API verification |
+| Provider coverage | Security-analysis client integrated; tool selection not fully migrated |
 | Auditability | In-memory records and optional JSONL persistence |
 | Data | Synthetic authentication, CloudTrail, and IAM events |
 | AWS integration | No live AWS access demonstrated |
@@ -647,9 +1070,23 @@ Use `Ctrl+C` to stop the process if started manually.
 | Prompt-injection resistance | Narrow application-level defenses; no comprehensive security guarantee |
 | Production readiness | Not production hardened |
 
-**Important distinction:** MCP provides a standardized communication protocol for tools. It does not automatically guarantee tool safety, read-only execution, authorization, or prompt-injection resistance.
+### Important Security Distinctions
 
-SentinelAI implements explicit application checks around its exposed investigation tool.
+**MCP does not automatically guarantee tool safety.**
+
+MCP provides a standardized communication protocol for tools. Authorization, input validation, and execution restrictions must be implemented separately.
+
+**LLM provider abstraction does not guarantee model safety.**
+
+Changing from Ollama to Claude changes the model implementation used by the supported security-analysis path. It does not guarantee factual accuracy or immunity to prompt injection.
+
+**Cloud LLM usage introduces additional considerations.**
+
+Using Claude may transmit supplied security evidence to an external API. Only appropriately authorized, sanitized data should be sent to external providers.
+
+**Deterministic controls remain essential.**
+
+Application-level validation and approved tool policies should remain independent of model-generated recommendations.
 
 ---
 
@@ -669,18 +1106,20 @@ SentinelAI implements explicit application checks around its exposed investigati
 | Day 10 | Tool-attempt accounting and stricter state transitions | Complete |
 | Day 11 | Persistent JSONL audit logging | Complete |
 | Day 12 | Prompt-injection evaluation and deterministic guardrail | Complete |
-| Day 13 | Secure MCP tool integration | Implemented and locally validated; Git commit pending |
-| Day 14 | Claude + Qwen3 provider abstraction | Planned |
+| Day 13 | Secure MCP tool integration | Complete; locally validated and published |
+| Day 14 | Claude + Qwen3 provider abstraction | Implemented; 61 tests passing |
 | Day 15 | Security evaluation dashboard | Planned |
 | Finalization | Expanded testing, documentation, demonstration, and portfolio polish | Planned |
 
 ### Potential Future Enhancements
 
 - Connect the AI investigator's validated tool selections to the MCP client interface.
-- Introduce a model-provider abstraction for Qwen3 and Claude.
+- Extend the provider abstraction to remaining direct Ollama integrations.
+- Verify Claude using a live API request when appropriate.
+- Add cross-provider security-analysis evaluations.
 - Expand adversarial prompt-injection scenarios.
 - Separate model-level and application-level attack metrics.
-- Add automated MCP protocol tests to pytest.
+- Add automated MCP protocol integration tests to pytest.
 - Add GitHub Actions continuous integration.
 - Improve audit-log integrity.
 - Introduce execution timeouts and concurrency controls.
@@ -723,7 +1162,23 @@ Application diagnostics can interfere with that channel if they are written to s
 
 SentinelAI redirects CloudTrail parser diagnostics to stderr at the MCP boundary to preserve protocol communication.
 
-### 9.5 Layered Validation Improves Confidence
+### 9.5 Provider Abstraction Improves Modularity
+
+Day 14 separated model-specific API calls from the security-analysis client.
+
+This allows the same analysis function to use different providers through a common interface.
+
+The architecture supports future model integration without requiring every consumer to implement provider-specific API logic.
+
+### 9.6 Mocked Tests Support Safe Integration Development
+
+The Claude provider was tested without requiring an API key for a real account or making paid requests.
+
+Mocked tests verified provider initialization, response handling, and factory selection.
+
+However, mocked tests do not establish live API compatibility or operational reliability.
+
+### 9.7 Layered Validation Improves Confidence
 
 SentinelAI uses multiple forms of verification:
 
@@ -733,6 +1188,8 @@ SentinelAI uses multiple forms of verification:
 - FastMCP tool-dispatch tests.
 - Separate MCP client-server integration tests.
 - MCP protocol-level invalid-input tests.
+- Mocked LLM provider tests.
+- Full regression-suite execution.
 
 These methods provide complementary evidence, although they do not establish production-level security assurance.
 
@@ -740,22 +1197,30 @@ These methods provide complementary evidence, although they do not establish pro
 
 ## 10. Repository and Disclaimer
 
-**Repository:** https://github.com/Nj2310/sentinelai-agentic-cloud-soc
+**Repository:**
 
-**Latest verified implementation state:**
+https://github.com/Nj2310/sentinelai-agentic-cloud-soc
 
-- Days 1–12 completed and published to GitHub.
+### Latest Verified Implementation State
+
+- Days 1–13 completed and published to GitHub.
 - Day 12 commit: `4b349ea`.
-- Day 13 MCP server implemented and tested locally.
+- Day 13 commit: `ff3ae59`.
+- Secure MCP server implemented and tested locally.
 - MCP SDK version: 1.30.0.
-- Four MCP security regression tests passing.
-- Separate MCP stdio integration test passing.
-- Full automated test suite: **49 passed in 1.34 seconds**.
-- Day 13 changes awaiting Git review, commit, and push at the time of this README update.
+- Standalone MCP stdio integration test previously passed.
+- Day 14 multi-provider LLM architecture implemented locally.
+- Ollama provider tests: 3 passed.
+- Claude provider tests: 4 passed.
+- Provider factory tests: 5 passed.
+- Existing security-analysis client test updated.
+- Full automated test suite: **61 passed in 6.66 seconds**.
+- Dependency verification: **No broken requirements found**.
+- Day 14 changes pending Git review, commit, and push.
 
 SentinelAI is an educational cybersecurity research and portfolio project.
 
-It uses synthetic security data, locally hosted AI models, deterministic application controls, and a local MCP server to explore secure AI-assisted SOC investigation workflows.
+It uses synthetic security data, locally hosted AI models, optional cloud model integration, deterministic application controls, and a local MCP server to explore secure AI-assisted SOC investigation workflows.
 
 Results are specific to the documented local tests and do not establish operational detection accuracy, comprehensive adversarial resistance, or suitability for production deployment.
 
