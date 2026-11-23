@@ -1201,27 +1201,92 @@ These methods provide complementary evidence, although they do not establish pro
 
 https://github.com/Nj2310/sentinelai-agentic-cloud-soc
 
+
 ### Latest Verified Implementation State
 
-- Days 1–13 completed and published to GitHub.
+- Days 1–14 completed and published to GitHub.
 - Day 12 commit: `4b349ea`.
 - Day 13 commit: `ff3ae59`.
+- Day 14 commit: `6099271`.
 - Secure MCP server implemented and tested locally.
 - MCP SDK version: 1.30.0.
-- Standalone MCP stdio integration test previously passed.
-- Day 14 multi-provider LLM architecture implemented locally.
-- Ollama provider tests: 3 passed.
-- Claude provider tests: 4 passed.
-- Provider factory tests: 5 passed.
-- Existing security-analysis client test updated.
-- Full automated test suite: **61 passed in 6.66 seconds**.
+- Ollama Qwen3 remains the default local LLM.
+- Optional Claude provider implemented and verified with mocked tests.
+- LLM provider abstraction integrated into the security-analysis client.
+
+### Day 15 — Security Evaluation Dashboard
+
+Day 15 introduces a local Streamlit dashboard for visualizing
+SentinelAI's prompt-injection security evaluation results.
+
+**Implementation:**
+
+- `tests/prompt_injection/evaluate_attacks.py` now saves structured JSON results.
+- `dashboard/evaluation_results.json` stores the latest evaluation snapshot.
+- `dashboard/app.py` provides an interactive Streamlit dashboard.
+- `requirements.txt` includes `streamlit==1.67.0`.
+
+**Dashboard capabilities:**
+
+- Attack success rate and blocked-attack metrics.
+- Control-case pass results.
+- Evaluation error reporting.
+- Attack outcome visualization.
+- Per-case evaluation results.
+- Expected-versus-actual tool selection comparison.
+- Evaluation timestamp and measurement-scope information.
+
+**Latest verified evaluation:**
+
+| Metric | Result |
+|---|---|
+| Prompt-injection attack cases | 3 |
+| Successful attacks | 0 |
+| Attacks blocked | 3 |
+| Clean control cases | 1 |
+| Controls passed | 1 |
+| Evaluation errors | 0 |
+| Observed application-level attack success rate | 0.0% |
+
+These results are from a small synthetic dataset and measure
+application-validated tool selections rather than raw LLM responses.
+
+The fake system-message attack (PI-003) caused Qwen3 to recommend
+no investigation tool, but the deterministic application guardrail
+enforced the expected investigation selection.
+
+**Run the dashboard:**
+
+```powershell
+python -m tests.prompt_injection.evaluate_attacks
+python -m streamlit run dashboard/app.py
+```
+
+Open the local URL displayed by Streamlit, normally
+`http://localhost:8501`.
+
+The dashboard reads saved evaluation results and does not independently
+execute investigations or rerun the LLM.
+
+**Verification:**
+
+- Streamlit dashboard launched and rendered successfully.
+- Full automated test suite: **61 passed in 11.50 seconds**.
 - Dependency verification: **No broken requirements found**.
-- Day 14 changes pending Git review, commit, and push.
+- Day 15 changes pending Git review, commit, and push.
+
+### Project Disclaimer
 
 SentinelAI is an educational cybersecurity research and portfolio project.
 
-It uses synthetic security data, locally hosted AI models, optional cloud model integration, deterministic application controls, and a local MCP server to explore secure AI-assisted SOC investigation workflows.
+It uses synthetic security data, locally hosted AI models, optional
+cloud model integration, deterministic application controls, and a
+local MCP server to explore secure AI-assisted SOC investigation workflows.
 
-Results are specific to the documented local tests and do not establish operational detection accuracy, comprehensive adversarial resistance, or suitability for production deployment.
+Results are specific to the documented local tests and do not establish
+operational detection accuracy, comprehensive adversarial resistance,
+or suitability for production deployment.
 
-Human oversight, stronger infrastructure controls, expanded testing, and additional security engineering would be required before any real-world operational use.
+Human oversight, stronger infrastructure controls, expanded testing,
+and additional security engineering would be required before any
+real-world operational use.
