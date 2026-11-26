@@ -1,3 +1,4 @@
+
 # Python virtual environments
 .venv/
 venv/
@@ -20,6 +21,10 @@ reports/*.txt
 
 # Generated investigation audit logs
 *.jsonl
+
+# Generated SOC dashboard snapshots
+dashboard/soc_results.json
+dashboard/soc_results.tmp
 
 # Local authentication datasets
 data/*.csv
